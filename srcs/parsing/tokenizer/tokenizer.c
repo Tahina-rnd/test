@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   tokenizer.c                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: miokrako <miokrako@student.42antananari    +#+  +:+       +#+        */
+/*   By: tarandri <tarandri@student.42antananarivo. +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/18 21:25:06 by tarandri          #+#    #+#             */
-/*   Updated: 2026/01/02 11:23:14 by miokrako         ###   ########.fr       */
+/*   Updated: 2026/01/07 15:27:17 by tarandri         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -64,6 +64,7 @@ t_token	*tokenize(char *input)
 	t_token	*new_token;
 	int		i;
 	char	*word;
+	int		was_quoted;
 
 	tokens = NULL;
 	i = 0;
@@ -86,7 +87,8 @@ t_token	*tokenize(char *input)
 		}
 		else
 		{
-			word = extract_word(input, &i);
+			was_quoted = 0;
+			word = extract_word(input, &i, &was_quoted);
 			if (!word)
 			{
 				new_token = create_token(ERROR, ft_strdup("unclosed quote"));
@@ -101,6 +103,8 @@ t_token	*tokenize(char *input)
 				free_tokens(tokens);
 				return (NULL);
 			}
+			new_token->was_quoted = was_quoted;  // NOUVEAU: setter le flag
+			// printf("🔍 DEBUG tokenize: word='%s', was_quoted=%d\n", word, was_quoted);
 			add_token_back(&tokens, new_token);
 		}
 	}

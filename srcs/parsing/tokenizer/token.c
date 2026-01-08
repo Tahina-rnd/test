@@ -6,7 +6,7 @@
 /*   By: tarandri <tarandri@student.42antananarivo. +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/18 21:21:01 by tarandri          #+#    #+#             */
-/*   Updated: 2025/12/26 07:23:33 by tarandri         ###   ########.fr       */
+/*   Updated: 2026/01/07 06:30:06 by tarandri         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,6 +21,7 @@ t_token	*create_token(t_token_type type, char *value)
 		return (NULL);
 	token->type = type;
 	token->value = value;
+	token->was_quoted = 0;
 	token->next = NULL;
 	return (token);
 }

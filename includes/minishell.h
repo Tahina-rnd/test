@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   minishell.h                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: miokrako <miokrako@student.42antananari    +#+  +:+       +#+        */
+/*   By: tarandri <tarandri@student.42antananarivo. +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/18 20:22:34 by tarandri          #+#    #+#             */
-/*   Updated: 2026/01/05 10:25:10 by miokrako         ###   ########.fr       */
+/*   Updated: 2026/01/08 05:26:22 by tarandri         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -53,6 +53,7 @@ typedef struct s_token
 {
 	t_token_type	type;
 	char			*value;
+	int				was_quoted;
 	struct s_token	*next;
 }	t_token;
 
@@ -67,6 +68,7 @@ typedef struct s_redir
 typedef struct s_command
 {
     char            **args;
+	int             *args_was_quoted;
     t_redir         *input_redirection;
     t_redir         *output_redirection;  // Liste unique pour > et >>
     t_redir         *heredoc;

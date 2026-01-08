@@ -6,7 +6,7 @@
 /*   By: tarandri <tarandri@student.42antananarivo. +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/26 10:01:54 by tarandri          #+#    #+#             */
-/*   Updated: 2026/01/06 16:18:35 by tarandri         ###   ########.fr       */
+/*   Updated: 2026/01/07 06:14:59 by tarandri         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -68,7 +68,8 @@ void	clean_empty_tokens(t_token **tokens)
 	while (current)
 	{
 		if (current->type == WORD
-			&& (!current->value || current->value[0] == '\0'))
+			&& (!current->value || current->value[0] == '\0')
+			&& current->was_quoted == 0)
 		{
 			to_delete = current;
 			if (prev)
@@ -87,3 +88,4 @@ void	clean_empty_tokens(t_token **tokens)
 		}
 	}
 }
+

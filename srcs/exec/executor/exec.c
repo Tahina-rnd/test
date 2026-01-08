@@ -6,7 +6,7 @@
 /*   By: miokrako <miokrako@student.42antananari    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/25 15:27:36 by miokrako          #+#    #+#             */
-/*   Updated: 2026/01/05 15:00:25 by miokrako         ###   ########.fr       */
+/*   Updated: 2026/01/06 21:08:23 by miokrako         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -180,8 +180,7 @@ static void child_process(t_command *cmd, t_shell *shell,
         exit(126);
     }
 }
-
-static void wait_all_children(pid_t last_pid, t_shell *shell)
+static void wait_all_children(pid_t last_pid, t_shell *shell, int has_pipe)
 {
     pid_t   wpid;
     int     status;
@@ -200,16 +199,28 @@ static void wait_all_children(pid_t last_pid, t_shell *shell)
         if (wpid == last_pid)
             last_status = status;
     }
+
     setup_prompt_signal();
+
     if (WIFEXITED(last_status))
         shell->last_exit_status = WEXITSTATUS(last_status);
     else if (WIFSIGNALED(last_status))
     {
-        shell->last_exit_status = 128 + WTERMSIG(last_status);
-        if (shell->last_exit_status == 130)
-            write(1, "\n", 1);
-        else if (shell->last_exit_status == 131)
+        int sig = WTERMSIG(last_status);
+        shell->last_exit_status = 128 + sig;
+
+        // MODIFICATION: Distinguer commande simple vs pipeline
+        if (sig == SIGINT)  // Ctrl+C
+        {
+            // Afficher newline SEULEMENT si pas de pipe
+            if (has_pipe)
+                write(1, "\n", 1);
+            // Sinon (pipeline), ne rien afficher
+        }
+        else if (sig == SIGQUIT)  // Ctrl+
+        {
             ft_putstr_fd("Quit (core dumped)\n", 2);
+        }
     }
 }
 
@@ -220,10 +231,14 @@ void executor(t_shell *shell)
     int         curr_pipe[2];
     pid_t       pid;
     pid_t       last_pid;
+    int         has_pipe;  // NOUVEAU
 
     prev_pipe[0] = -1;
     prev_pipe[1] = -1;
     cmd = shell->commands;
+
+    // NOUVEAU: Détecter si on a un pipeline
+    has_pipe = (cmd && cmd->next) ? 1 : 0;
 
     if (process_heredocs(shell) != 0)
     {
@@ -293,6 +308,8 @@ void executor(t_shell *shell)
         }
         cmd = cmd->next;
     }
-    wait_all_children(last_pid, shell);
+
+    // MODIFICATION: Passer has_pipe à wait_all_children
+    wait_all_children(last_pid, shell, has_pipe);
     cleanup_heredocs(shell);
 }

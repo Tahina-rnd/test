@@ -6,12 +6,11 @@
 /*   By: tarandri <tarandri@student.42antananarivo. +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/04 22:41:18 by tarandri          #+#    #+#             */
-/*   Updated: 2026/01/07 17:17:04 by tarandri         ###   ########.fr       */
+/*   Updated: 2026/01/07 17:40:58 by tarandri         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "../../../includes/exec.h"
-
+#include "../../../includes/parsing.h"
 
 static int	is_valid_identifier(const char *str)
 {
@@ -29,7 +28,7 @@ static int	is_valid_identifier(const char *str)
 	return (1);
 }
 
-static void	remove_env_node(t_env **head, char *key)
+static void	remove_env_node(t_env **head, const char *key)
 {
 	t_env	*current;
 	t_env	*prev;
@@ -40,7 +39,7 @@ static void	remove_env_node(t_env **head, char *key)
 	prev = NULL;
 	while (current)
 	{
-		if (ft_strcmp(current->key, key) == 0)
+		if (strcmp(current->key, key) == 0)   // soloina ft_strcmp
 		{
 			if (prev == NULL)
 				*head = current->next;

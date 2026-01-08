@@ -15,11 +15,15 @@ SRCS =  srcs/main.c \
 		srcs/parsing/expansion/expand_exit.c \
 		srcs/parsing/expansion/expand_utils.c \
 		srcs/parsing/expansion/expander.c \
+		srcs/parsing/expansion/word_split.c \
+		srcs/parsing/expansion/expand_commands.c \
 		srcs/parsing/parser/add_args.c \
 		srcs/parsing/parser/free_cmd.c \
 		srcs/parsing/parser/handle_redir.c \
 		srcs/parsing/parser/redir_utils.c \
 		srcs/parsing/parser/parser.c \
+		srcs/parsing/parser/ambiguous_redir.c \
+		srcs/parsing/parser/check_ambiguous.c \
 		srcs/parsing/env/env_dup_utils.c \
 		srcs/parsing/env/env_duplicate.c \
 		srcs/parsing/env/env_to_array.c \

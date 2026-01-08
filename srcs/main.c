@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   main.c                                             :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: miokrako <miokrako@student.42antananari    +#+  +:+       +#+        */
+/*   By: tarandri <tarandri@student.42antananarivo. +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/18 21:33:27 by tarandri          #+#    #+#             */
-/*   Updated: 2026/01/05 15:23:46 by miokrako         ###   ########.fr       */
+/*   Updated: 2026/01/08 06:49:59 by tarandri         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,7 +21,7 @@ int main(int argc, char **argv, char **envp)
 	(void)argc;
 	(void)argv;
 
-	// Initialisation complète à NULL/0
+	// ========== INITIALISATION ==========
 	shell.input = NULL;
 	shell.env = NULL;
 	shell.tokens = NULL;
@@ -46,23 +46,14 @@ int main(int argc, char **argv, char **envp)
 	// Configuration des signaux
 	setup_prompt_signal();
 
-	// Boucle principale
+	// ========== BOUCLE PRINCIPALE ==========
 	while (1)
 	{
 		g_received_signal = 0;
 
-		// Lecture de l'entrée
+		// ===== 1. LECTURE DE L'ENTRÉE =====
 		shell.input = readline("minishell> ");
 
-		if (g_received_signal == SIGINT)
-        {
-            shell.last_exit_status = 130;
-            g_received_signal = 0;
-
-            // Si readline a retourné NULL après Ctrl+C
-            if (!shell.input)
-                continue;
-        }
 		// EOF (Ctrl+D)
 		if (!shell.input)
 		{
@@ -81,7 +72,7 @@ int main(int argc, char **argv, char **envp)
 		// Ajout à l'historique
 		add_history(shell.input);
 
-		// Tokenisation
+		// ===== 2. TOKENISATION (LEXER) =====
 		shell.tokens = tokenize(shell.input);
 		if (!shell.tokens)
 		{
@@ -90,7 +81,7 @@ int main(int argc, char **argv, char **envp)
 			continue;
 		}
 
-		// Vérification syntaxe
+		// ===== 3. VÉRIFICATION SYNTAXE =====
 		if (check_tokens(shell.tokens))
 		{
 			shell.last_exit_status = 2;
@@ -101,19 +92,7 @@ int main(int argc, char **argv, char **envp)
 			continue;
 		}
 
-		// Expansion
-		expand_tokens(shell.tokens, &shell);
-		clean_empty_tokens(&shell.tokens);
-
-		// Si plus de tokens après nettoyage
-		if (!shell.tokens)
-		{
-			free(shell.input);
-			shell.input = NULL;
-			continue;
-		}
-
-		// Parsing
+		// ===== 4. PARSING (CONSTRUCTION AST) =====
 		shell.commands = parse(shell.tokens);
 		if (!shell.commands)
 		{
@@ -124,14 +103,30 @@ int main(int argc, char **argv, char **envp)
 			continue;
 		}
 
-		// Vérification commande valide
-		if (shell.commands->args && shell.commands->args[0])
+		// ===== 5. EXPANSION =====
+		// - Variable expansion ($VAR)
+		// - Word splitting (IFS)
+		// - Quote removal
+		// - Globbing (TODO)
+		expand_commands(shell.commands, &shell);
+
+		// Vérification commande valide après expansion
+		if (!shell.commands->args || !shell.commands->args[0])
 		{
-			// Exécution
-			executor(&shell);
+			// Commande vide après expansion (ex: VAR="" ; echo $VAR)
+			free_tokens(shell.tokens);
+			shell.tokens = NULL;
+			free_cmds(shell.commands);
+			shell.commands = NULL;
+			free(shell.input);
+			shell.input = NULL;
+			continue;
 		}
 
-		// Nettoyage
+		// ===== 6. EXÉCUTION =====
+		executor(&shell);
+
+		// ===== 7. NETTOYAGE =====
 		if (shell.tokens)
 		{
 			free_tokens(shell.tokens);
@@ -149,7 +144,7 @@ int main(int argc, char **argv, char **envp)
 		}
 	}
 
-	// Nettoyage final
+	// ========== NETTOYAGE FINAL ==========
 	if (shell.env)
 		free_env_list(shell.env);
 	if (shell.tokens)

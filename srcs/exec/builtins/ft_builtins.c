@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ft_builtins.c                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: miokrako <miokrako@student.42antananari    +#+  +:+       +#+        */
+/*   By: tarandri <tarandri@student.42antananarivo. +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/18 21:31:02 by miokrako          #+#    #+#             */
-/*   Updated: 2026/01/05 15:11:52 by miokrako         ###   ########.fr       */
+/*   Updated: 2026/01/07 17:17:05 by tarandri         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -106,13 +106,23 @@ static int	handle_too_many_args(void)
 int	builtin_exit(char **args, t_shell *shell)
 {
 	int	exit_code;
+	if (!shell->commands->next)
+		ft_putstr_fd("exit\n", 2);
 
-	ft_putstr_fd("exit\n", 2);
 	exit_code = 0;
 	if (args[1])
 	{
 		if (!ft_is_numeric(args[1]))
+		{
 			handle_exit_numeric_error(args[1], shell);
+			if (shell->commands->next)
+			{
+				cleanup_child(shell);
+				exit(2);
+			}
+			cleanup_shell(shell);
+			exit(2);
+		}
 		else if (args[2])
 			return (handle_too_many_args());
 		else
@@ -120,9 +130,15 @@ int	builtin_exit(char **args, t_shell *shell)
 	}
 	else
 		exit_code = shell->last_exit_status;
+	if (shell->commands->next)
+	{
+		cleanup_child(shell);
+		exit(exit_code);
+	}
 	cleanup_shell(shell);
 	exit(exit_code);
 }
+
 
 int	builtin_env(t_env *env)
 {
