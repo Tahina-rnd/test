@@ -6,7 +6,7 @@
 /*   By: tarandri <tarandri@student.42antananarivo. +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/08 20:32:05 by miokrako          #+#    #+#             */
-/*   Updated: 2026/01/10 22:28:44 by tarandri         ###   ########.fr       */
+/*   Updated: 2026/01/10 22:53:55 by tarandri         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -58,6 +58,7 @@ char	*get_path(t_env *env, char *cmd)
 		return (NULL);
 	result = try_paths(paths, cmd);
 	free_tab(paths);
+	free(path_var); // IMPORTANT: get_env_value retourne un strdup, il faut free
 	return (result);
 }
 
@@ -104,36 +105,43 @@ void	exec_simple_cmd(t_command *cmd, t_env *env)
 	char	**sh_args;
 	char	**args_array;
 	int		i;
+	t_arg	*tmp;
 
-	if (!cmd || !cmd->args || !cmd->args[0].value)
+	if (!cmd || !cmd->args || !cmd->args->value)
 		exit(0);
-	check_special_cases(cmd->args[0].value);
+	check_special_cases(cmd->args->value);
 
-	// Convert t_arg array to char** array
+	// Convert t_arg LIST to char** array
 	i = 0;
-	while (cmd->args[i].value)
+	tmp = cmd->args;
+	while (tmp)
+	{
 		i++;
+		tmp = tmp->next;
+	}
 	args_array = (char **)malloc(sizeof(char *) * (i + 1));
 	if (!args_array)
 		exit(1);
 	i = 0;
-	while (cmd->args[i].value)
+	tmp = cmd->args;
+	while (tmp)
 	{
-		args_array[i] = cmd->args[i].value;
+		args_array[i] = tmp->value;
+		tmp = tmp->next;
 		i++;
 	}
 	args_array[i] = NULL;
 
-	path = get_path(env, cmd->args[0].value);
+	path = get_path(env, cmd->args->value);
 	if (!path)
 	{
 		ft_putstr_fd("minishell: ", 2);
-		ft_putstr_fd(cmd->args[0].value, 2);
+		ft_putstr_fd(cmd->args->value, 2);
 		ft_putstr_fd(": command not found\n", 2);
 		free(args_array);
 		exit(127);
 	}
-	handle_exec_error(cmd->args[0].value, path);
+	handle_exec_error(cmd->args->value, path);
 	env_tab = env_to_tab(env);
 	execve(path, args_array, env_tab);
 	if (errno == ENOEXEC)
@@ -154,14 +162,14 @@ void	exec_simple_cmd(t_command *cmd, t_env *env)
 	exit(126);
 }
 
-// Helper function used in child_process
 void	exec_simple_cmd_with_array(t_command *cmd, t_env *env, char **args_array)
 {
 	char	*path;
 	char	**env_tab;
 	char	**sh_args;
 
-	if (!cmd || !args_array || !args_array[0])
+	(void)cmd; // cmd n'est pas utilisé directement ici
+	if (!args_array || !args_array[0])
 		exit(0);
 	check_special_cases(args_array[0]);
 	path = get_path(env, args_array[0]);

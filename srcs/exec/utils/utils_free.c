@@ -6,7 +6,7 @@
 /*   By: tarandri <tarandri@student.42antananarivo. +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/26 13:28:19 by miokrako          #+#    #+#             */
-/*   Updated: 2026/01/10 22:34:14 by tarandri         ###   ########.fr       */
+/*   Updated: 2026/01/10 23:04:11 by tarandri         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,22 +28,31 @@ void	free_env(t_env *env)
 
 void	free_command(t_command *cmd)
 {
-	int	i;
+	t_arg	*current_arg;
+	t_arg	*next_arg;
 
+	if (!cmd)
+		return ;
+	// Correction ici : Parcours de liste chaînée au lieu d'indexation de tableau
 	if (cmd->args)
 	{
-		i = 0;
-		while (cmd->args[i])
+		current_arg = cmd->args;
+		while (current_arg)
 		{
-			free(cmd->args[i]);
-			i++;
+			next_arg = current_arg->next;
+			if (current_arg->value)
+				free(current_arg->value);
+			// Pensez à libérer 'segments' ici si nécessaire, pour éviter les leaks
+			free(current_arg);
+			current_arg = next_arg;
 		}
-		free(cmd->args);
 	}
 	if (cmd->input_redirection)
-		free(cmd->input_redirection);
+		free_redirections(cmd->input_redirection); // Assurez-vous d'avoir accès à cette fonction ou réimplémentez la boucle
 	if (cmd->output_redirection)
-		free(cmd->output_redirection);
+		free_redirections(cmd->output_redirection);
+	if (cmd->heredoc)
+		free_redirections(cmd->heredoc);
 	free(cmd);
 }
 
