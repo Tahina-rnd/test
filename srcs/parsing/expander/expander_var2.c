@@ -6,7 +6,7 @@
 /*   By: tarandri <tarandri@student.42antananarivo. +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/26 10:01:54 by tarandri          #+#    #+#             */
-/*   Updated: 2026/01/10 07:20:26 by tarandri         ###   ########.fr       */
+/*   Updated: 2026/01/10 07:40:07 by tarandri         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -55,7 +55,7 @@ static void	handle_dquote(char *str, int *i, char **result, t_env *env, int es)
 {
 	char	*tmp;
 
-	*result = append_char_to_str(*result, '"');
+	// *result = append_char_to_str(*result, '"');
 	(*i)++;
 	while (str[*i] && str[*i] != '"')
 	{
@@ -73,14 +73,14 @@ static void	handle_dquote(char *str, int *i, char **result, t_env *env, int es)
 	}
 	if (str[*i] == '"')
 	{
-		*result = append_char_to_str(*result, '"');
+		// *result = append_char_to_str(*result, '"');
 		(*i)++;
 	}
 }
 
 static void	handle_squote(char *str, int *i, char **result)
 {
-	*result = append_char_to_str(*result, '\'');
+	// *result = append_char_to_str(*result, '\'');
 	(*i)++;
 	while (str[*i] && str[*i] != '\'')
 	{
@@ -89,7 +89,7 @@ static void	handle_squote(char *str, int *i, char **result)
 	}
 	if (str[*i] == '\'')
 	{
-		*result = append_char_to_str(*result, '\'');
+		// *result = append_char_to_str(*result, '\'');
 		(*i)++;
 	}
 }

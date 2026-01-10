@@ -6,148 +6,106 @@
 /*   By: tarandri <tarandri@student.42antananarivo. +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/26 07:44:36 by tarandri          #+#    #+#             */
-/*   Updated: 2026/01/10 07:18:02 by tarandri         ###   ########.fr       */
+/*   Updated: 2026/01/10 22:05:03 by tarandri         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../../../includes/parsing.h"
 
-static char	*remove_quotes(char *str)
+static void	process_segment(t_arg *arg, t_segment *seg, t_shell *shell)
 {
-	char	*result;
-	int		i;
-	int		j;
-
-	if (!str)
-		return (NULL);
-	result = (char *)malloc(ft_strlen(str) + 1);
-	if (!result)
-		return (NULL);
-	i = 0;
-	j = 0;
-	while (str[i])
-	{
-		if (str[i] != '\'' && str[i] != '"')
-		{
-			result[j] = str[i];
-			j++;
-		}
-		i++;
-	}
-	result[j] = '\0';
-	return (result);
-}
-
-void	expand_args(t_command *cmd, t_env *env, int last_exit_status)
-{
-	t_arg	*new_args;
-	int		count;
-	int		i;
 	char	*expanded;
-	char	*without_quotes;
-	char	**words;
-	int		j;
+	char	*old_val;
 
-	new_args = NULL;
-	count = 0;
-	i = 0;
-	if (!cmd->args)
+	if (seg->quote == QUOTE_SINGLE)
+		expanded = ft_strdup(seg->value);
+	else
+		expanded = expand_text(seg->value, shell);
+	if (!expanded)
 		return ;
-	while (cmd->args[i].value)
-	{
-		expanded = expand_variables(cmd->args[i].value, env, last_exit_status);
-		if (!expanded)
-			expanded = ft_strdup("");
-		without_quotes = remove_quotes(expanded);
-		free(expanded);
-		if (!without_quotes)
-			without_quotes = ft_strdup("");
-		if (!cmd->args[i].was_quoted)
-		{
-			words = word_split(without_quotes, env);
-			j = 0;
-			while (words && words[j])
-			{
-				push_arg(&new_args, &count, words[j], 0);
-				j++;
-			}
-			free_split(words);
-		}
-		else
-			push_arg(&new_args, &count, without_quotes, 1);
-		free(without_quotes);
-		i++;
-	}
-	replace_args(cmd, new_args, count);
+	old_val = arg->value;
+	arg->value = ft_strjoin_free(old_val, expanded);
+	free(expanded);
 }
 
-void	expand_redirections(t_command *cmd, t_env *env, int exit_status)
+static void	expand_arg(t_arg *arg, t_shell *shell)
 {
-	t_redir	*redir;
+	t_segment	*seg;
+
+	if (arg->value)
+		free(arg->value);
+	arg->value = ft_strdup("");
+	seg = arg->segments;
+	while (seg)
+	{
+		process_segment(arg, seg, shell);
+		seg = seg->next;
+	}
+}
+
+static int	expand_redir_file(t_redir *redir, t_shell *shell)
+{
 	char	*expanded;
-	char	*without_quotes;
-	char	*tmp;
 
-	redir = cmd->input_redirection;
-	while (redir)
+	// Note: Ici on simplifie. Dans le vrai minishell, il faudrait utiliser
+	// la même logique de segments que pour les args pour être parfait.
+	// Mais pour l'instant, faisons simple :
+	
+	// Si le fichier contient un $, on l'étend
+	if (ft_strchr(redir->file, '$'))
 	{
-		expanded = expand_variables(redir->file, env, exit_status);
-		without_quotes = remove_quotes(expanded);
-		free(expanded);
-		if (without_quotes && is_ambiguous_redirect(without_quotes, 0))
+		expanded = expand_text(redir->file, shell);
+		if (!expanded || ft_strlen(expanded) == 0)
 		{
-			ft_putstr_fd("minishell: ", 2);
-			ft_putstr_fd(redir->file, 2);
-			ft_putendl_fd(": ambiguous redirect", 2);
-			free(without_quotes);
+			// C'est ICI qu'on détecte l'Ambiguous Redirect
+			printf("Minishell: %s: ambiguous redirect\n", redir->file);
+			if (expanded) free(expanded);
+			return (0); // Erreur
 		}
-		else if (without_quotes)
-		{
-			tmp = redir->file;
-			redir->file = without_quotes;
-			free(tmp);
-		}
-		redir = redir->next;
+		free(redir->file);
+		redir->file = expanded;
 	}
-	redir = cmd->output_redirection;
-	while (redir)
-	{
-		expanded = expand_variables(redir->file, env, exit_status);
-		without_quotes = remove_quotes(expanded);
-		free(expanded);
-		if (without_quotes && is_ambiguous_redirect(without_quotes, 0))
-		{
-			ft_putstr_fd("minishell: ", 2);
-			ft_putstr_fd(redir->file, 2);
-			ft_putendl_fd(": ambiguous redirect", 2);
-			free(without_quotes);
-		}
-		else if (without_quotes)
-		{
-			tmp = redir->file;
-			redir->file = without_quotes;
-			free(tmp);
-		}
-		redir = redir->next;
-	}
+	return (1); // Succès
 }
 
-void	expand_command(t_command *cmd, t_env *env, int last_exit_status)
+static int	process_redirs(t_redir *lst, t_shell *shell)
 {
-	if (!cmd)
-		return ;
-	expand_args(cmd, env, last_exit_status);
-	expand_redirections(cmd, env, last_exit_status);
+	while (lst)
+	{
+		// On n'étend pas les heredocs (sauf si on gère les quotes heredoc, bonus)
+		if (!expand_redir_file(lst, shell))
+			return (0);
+		lst = lst->next;
+	}
+	return (1);
 }
 
-void	expander(t_command *commands, t_env *env, int last_exit_status)
+void	expander(t_shell *shell, t_command *cmd)
 {
-	t_command	*current;
+	t_command	*curr_cmd;
+	t_arg		*curr_arg;
 
-	current = commands;
-	while (current)
+	curr_cmd = cmd;
+	while (curr_cmd)
 	{
-		expand_command(current, env, last_exit_status);
-		current = current->next;
+		// 1. Expansion des arguments (ls $USER)
+		curr_arg = curr_cmd->args;
+		while (curr_arg)
+		{
+			expand_arg(curr_arg, shell);
+			curr_arg = curr_arg->next;
+		}
+
+		// 2. Expansion des redirections (echo a > $FICHIER)
+		// Si ambiguous redirect, on peut choisir de marquer la commande comme invalide
+		if (!process_redirs(curr_cmd->input_redirection, shell)
+			|| !process_redirs(curr_cmd->output_redirection, shell))
+		{
+			// Astuce : On peut mettre une commande vide ou un flag d'erreur
+			// pour que l'executor ne l'exécute pas.
+			shell->last_exit_status = 1;
+		}
+		
+		curr_cmd = curr_cmd->next;
 	}
 }

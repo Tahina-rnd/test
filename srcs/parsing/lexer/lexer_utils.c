@@ -1,76 +1,83 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   lexer_utils.c                                      :+:      :+:    :+:   */
+/*   lex_quotes.c                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: tarandri <tarandri@student.42antananarivo. +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/18 21:19:16 by tarandri          #+#    #+#             */
-/*   Updated: 2026/01/08 22:07:00 by tarandri         ###   ########.fr       */
+/*   Updated: 2026/01/10 11:59:37 by tarandri         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../../../includes/parsing.h"
 
-t_token	*create_token(t_token_type type, char *value)
+int	is_whitespace(char c)
 {
-	t_token	*token;
+	return (c == ' ' || c == '\t' || c == '\n'
+		|| c == '\v' || c == '\f' || c == '\r');
+}
 
-	token = (t_token *)malloc(sizeof(t_token));
-	if (!token)
-		return (NULL);
-	token->type = type;
-	token->value = value;
-	token->was_quoted = 0;
-	token->next = NULL;
-	return (token);
+int	is_operator(char c)
+{
+	return (c == '|' || c == '<' || c == '>');
+}
+
+void	token_add_back(t_token **lst, t_token *new)
+{
+	t_token	*temp;
+
+	if (!lst || !new)
+		return ;
+	if (!*lst)
+	{
+		*lst = new;
+		return ;
+	}
+	temp = *lst;
+	while (temp->next)
+		temp = temp->next;
+	temp->next = new;
+}
+
+void	segment_add_back(t_segment **lst, t_segment *new)
+{
+	t_segment	*temp;
+
+	if (!lst || !new)
+		return ;
+	if (!*lst)
+	{
+		*lst = new;
+		return ;
+	}
+	temp = *lst;
+	while (temp->next)
+		temp = temp->next;
+	temp->next = new;
 }
 
 void	free_tokens(t_token *tokens)
 {
-	t_token	*tmp;
+	t_token		*tmp_tok;
+	t_segment	*tmp_seg;
+	t_segment	*next_seg;
 
 	while (tokens)
 	{
-		tmp = tokens;
+		tmp_tok = tokens;
 		tokens = tokens->next;
-		if (tmp->value)
-			free(tmp->value);
-		free(tmp);
+		if (tmp_tok->literal)
+			free(tmp_tok->literal);
+		tmp_seg = tmp_tok->segments;
+		while (tmp_seg)
+		{
+			next_seg = tmp_seg->next;
+			if (tmp_seg->value)
+				free(tmp_seg->value);
+			free(tmp_seg);
+			tmp_seg = next_seg;
+		}
+		free(tmp_tok);
 	}
-}
-
-t_token	*get_last_token(t_token *tokens)
-{
-	if (!tokens)
-		return (NULL);
-	while (tokens->next)
-		tokens = tokens->next;
-	return (tokens);
-}
-
-void	add_token(t_token **tokens, t_token_type type, char *value)
-{
-	t_token	*new_token;
-	t_token	*last;
-
-	new_token = create_token(type, value);
-	if (!new_token)
-	{
-		if (value)
-			free(value);
-		return ;
-	}
-	if (!*tokens)
-	{
-		*tokens = new_token;
-		return ;
-	}
-	last = get_last_token(*tokens);
-	last->next = new_token;
-}
-
-int	is_quote(char c)
-{
-	return (c == '\'' || c == '"');
 }

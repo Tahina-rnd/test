@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   exec.h                                             :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: miokrako <miokrako@student.42antananari    +#+  +:+       +#+        */
+/*   By: tarandri <tarandri@student.42antananarivo. +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/24 11:01:22 by miokrako          #+#    #+#             */
-/*   Updated: 2026/01/09 12:10:03 by miokrako         ###   ########.fr       */
+/*   Updated: 2026/01/10 21:52:34 by tarandri         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,7 +25,7 @@ void	executor(t_shell *shell);
 
 // ========== ENVIRONMENT ==========
 void	init_env(t_shell *shell, char **envp);
-char	*get_env_value(t_env *env, char *key);
+// char	*get_env_value(t_env *env, char *key);
 void	update_env_var(t_env *env, char *key, char *new_value);
 char	**env_to_tab(t_env *env);
 int		count_env_vars(t_env *env);

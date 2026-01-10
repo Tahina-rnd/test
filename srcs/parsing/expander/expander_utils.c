@@ -6,110 +6,48 @@
 /*   By: tarandri <tarandri@student.42antananarivo. +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/26 10:39:18 by tarandri          #+#    #+#             */
-/*   Updated: 2026/01/09 14:41:59 by tarandri         ###   ########.fr       */
+/*   Updated: 2026/01/10 22:31:02 by tarandri         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../../../includes/parsing.h"
 
-void	free_split(char **split)
+char	*ft_strjoin_free(char *s1, char *s2)
 {
-	int	i;
+	char	*new_str;
+	size_t	len1;
+	size_t	len2;
 
-	if (!split)
-		return ;
-	i = 0;
-	while (split[i])
-	{
-		free(split[i]);
-		i++;
-	}
-	free(split);
-}
-
-void	push_arg(t_arg **args, int *count, char *value, int was_quoted)
-{
-	t_arg	*new_args;
-	int		i;
-
-	new_args = (t_arg *)malloc(sizeof(t_arg) * (*count + 2));
-	if (!new_args)
-		return ;
-	i = 0;
-	while (i < *count)
-	{
-		new_args[i].value = (*args)[i].value;
-		new_args[i].was_quoted = (*args)[i].was_quoted;
-		i++;
-	}
-	new_args[*count].value = ft_strdup(value);
-	new_args[*count].was_quoted = was_quoted;
-	new_args[*count + 1].value = NULL;
-	new_args[*count + 1].was_quoted = 0;
-	if (*args)
-		free(*args);
-	*args = new_args;
-	(*count)++;
-}
-
-void	replace_args(t_command *cmd, t_arg *new_args, int count)
-{
-	int	i;
-
-	if (cmd->args)
-	{
-		i = 0;
-		while (cmd->args[i].value)
-		{
-			free(cmd->args[i].value);
-			i++;
-		}
-		free(cmd->args);
-	}
-	cmd->args = new_args;
-	(void)count;
-}
-
-int	is_ambiguous_redirect(char *expanded, int was_quoted)
-{
-	int	word_count;
-	int	i;
-
-	if (was_quoted)
-		return (0);
-	if (!expanded || !expanded[0])
-		return (1);
-	word_count = 0;
-	i = 0;
-	while (expanded[i])
-	{
-		while (expanded[i] && (expanded[i] == ' ' || expanded[i] == '\t'))
-			i++;
-		if (expanded[i])
-		{
-			word_count++;
-			while (expanded[i] && expanded[i] != ' ' && expanded[i] != '\t')
-				i++;
-		}
-	}
-	return (word_count != 1);
-}
-
-char	*expand_redir_file(char *file, t_env *env, int exit_status)
-{
-	char	*expanded;
-
-	expanded = expand_variables(file, env, exit_status);
-	if (!expanded)
+	if (!s1)
+		s1 = ft_strdup("");
+	if (!s2)
+		return (s1);
+	len1 = ft_strlen(s1);
+	len2 = ft_strlen(s2);
+	new_str = malloc(sizeof(char) * (len1 + len2 + 1));
+	if (!new_str)
 		return (NULL);
-	// printf ("expand_redir : expanded = %s\n", expanded);
-	if (is_ambiguous_redirect(expanded, 0))
+	ft_memcpy(new_str, s1, len1);
+	ft_memcpy(new_str + len1, s2, len2);
+	new_str[len1 + len2] = '\0';
+	free(s1);
+	return (new_str);
+}
+
+/*
+** Nouvelle signature demandée : (t_env *env, char *key)
+** Elle cherche uniquement dans la liste et renvoie une COPIE.
+*/
+char	*get_env_value(t_env *env, char *key)
+{
+	t_env	*tmp;
+
+	tmp = env;
+	while (tmp)
 	{
-		ft_putstr_fd("minishell: ", 2);
-		ft_putstr_fd(file, 2);
-		ft_putendl_fd(": ambiguous redirect", 2);
-		free(expanded);
-		return (NULL);
+		if (ft_strcmp(key, tmp->key) == 0)
+			return (ft_strdup(tmp->value));
+		tmp = tmp->next;
 	}
-	return (expanded);
+	return (ft_strdup(""));
 }

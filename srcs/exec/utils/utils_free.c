@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   utils_free.c                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: miokrako <miokrako@student.42antananari    +#+  +:+       +#+        */
+/*   By: tarandri <tarandri@student.42antananarivo. +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/26 13:28:19 by miokrako          #+#    #+#             */
-/*   Updated: 2026/01/09 12:12:08 by miokrako         ###   ########.fr       */
+/*   Updated: 2026/01/10 22:34:14 by tarandri         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,26 +26,26 @@ void	free_env(t_env *env)
 	}
 }
 
-// void	free_command(t_command *cmd)
-// {
-// 	int	i;
+void	free_command(t_command *cmd)
+{
+	int	i;
 
-// 	if (cmd->args)
-// 	{
-// 		i = 0;
-// 		while (cmd->args[i])
-// 		{
-// 			free(cmd->args[i]);
-// 			i++;
-// 		}
-// 		free(cmd->args);
-// 	}
-// 	if (cmd->input_redirection)
-// 		free(cmd->input_redirection);
-// 	if (cmd->output_redirection)
-// 		free(cmd->output_redirection);
-// 	free(cmd);
-// }
+	if (cmd->args)
+	{
+		i = 0;
+		while (cmd->args[i])
+		{
+			free(cmd->args[i]);
+			i++;
+		}
+		free(cmd->args);
+	}
+	if (cmd->input_redirection)
+		free(cmd->input_redirection);
+	if (cmd->output_redirection)
+		free(cmd->output_redirection);
+	free(cmd);
+}
 
 void	free_commands(t_command *commands)
 {
