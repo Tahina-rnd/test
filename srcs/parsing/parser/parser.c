@@ -6,136 +6,127 @@
 /*   By: tarandri <tarandri@student.42antananarivo. +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/26 07:45:47 by tarandri          #+#    #+#             */
-/*   Updated: 2026/01/08 05:31:07 by tarandri         ###   ########.fr       */
+/*   Updated: 2026/01/09 13:28:22 by tarandri         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../../../includes/parsing.h"
 
-/**
- * Initialise une nouvelle commande avec toutes les listes à NULL
- */
-static t_command *init_command(void)
+int	syntax_error(char *token)
 {
-	t_command *command;
-
-    command = malloc(sizeof(t_command));
-    if (!command)
-        return (NULL);
-
-    command->args = malloc(sizeof(char *) * 1);
-    if (!command->args)
-    {
-        free(command);
-        return (NULL);
-    }
-    command->args[0] = NULL;    
-    command->args_was_quoted = malloc(sizeof(int) * 1);
-    if (!command->args_was_quoted)
-    {
-        free(command->args);
-        free(command);
-        return (NULL);
-    }
-    command->args_was_quoted[0] = 0;
-    command->input_redirection = NULL;
-    command->output_redirection = NULL;
-    command->heredoc = NULL;
-    command->next = NULL;
-
-    return (command);
+	ft_putstr_fd("minishell: syntax error near unexpected token `", 2);
+	if (token)
+		ft_putstr_fd(token, 2);
+	else
+		ft_putstr_fd("newline", 2);
+	ft_putendl_fd("'", 2);
+	return (0);
 }
 
-/**
- * Finalise une commande et l'ajoute à la liste des commandes
- */
-int	finalize_command(t_command **command_list, t_command **current_cmd)
+int	validate_tokens(t_token *tokens)
 {
-	t_command	*temp;
+	t_token	*current;
 
-	if (!*current_cmd)
+	if (!tokens)
 		return (0);
-	if (!*command_list)
-		*command_list = *current_cmd;
-	else
+	if (tokens->type == PIPE)
+		return (syntax_error("|"));
+	current = tokens;
+	while (current && current->type != END)
 	{
-		temp = *command_list;
-		while (temp->next)
-			temp = temp->next;
-		temp->next = *current_cmd;
+		if (current->type == PIPE)
+		{
+			if (!current->next || current->next->type == END)
+				return (syntax_error("|"));
+			if (current->next->type == PIPE)
+				return (syntax_error("|"));
+		}
+		if (current->type >= REDIRECT_IN && current->type <= HEREDOC)
+		{
+			if (!current->next || current->next->type != WORD)
+				return (syntax_error(current->value));
+		}
+		current = current->next;
 	}
-	*current_cmd = NULL;
 	return (1);
 }
 
-/**
- * Parse les tokens et construit la liste de commandes
- */
-t_command	*parse(t_token *tokens)
+int	parse_simple_command(t_token **tokens, t_command *cmd)
 {
-	t_command	*command_list;
-	t_command	*current_cmd;
-	t_token		*current;
-
-	command_list = NULL;
-	current_cmd = init_command();
-	current = tokens;
-
-	if (!tokens || !current_cmd)
-		return (NULL);
-
-	while (current)
+	while (*tokens && (*tokens)->type != PIPE && (*tokens)->type != END)
 	{
-		if (current->type == WORD)
+		if ((*tokens)->type == REDIRECT_IN)
 		{
-			// Ajouter un argument
-			if (!add_argument(current_cmd, current->value, current->was_quoted))
-				return (cleanup_and_return(&command_list, current_cmd), NULL);
+			if (!handle_input_redir(tokens, cmd))
+				return (0);
 		}
-		else if (current->type == REDIRECT_IN)
+		else if ((*tokens)->type == REDIRECT_OUT)
 		{
-			// Redirection d'entrée: <
-			if (!handle_input_redirection(current_cmd, &current))
-				return (cleanup_and_return(&command_list, current_cmd), NULL);
-			continue;  // handle_input_redirection avance current
+			if (!handle_output_redir(tokens, cmd))
+				return (0);
 		}
-		else if (current->type == REDIRECT_OUT)
+		else if ((*tokens)->type == HEREDOC)
 		{
-			// Redirection de sortie: >
-			if (!handle_output_redirection(current_cmd, &current))
-				return (cleanup_and_return(&command_list, current_cmd), NULL);
-			continue;
+			if (!handle_heredoc(tokens, cmd))
+				return (0);
 		}
-		else if (current->type == APPEND)
+		else if ((*tokens)->type == APPEND)
 		{
-			// Redirection en mode append: >>
-			if (!handle_append_redirection(current_cmd, &current))
-				return (cleanup_and_return(&command_list, current_cmd), NULL);
-			continue;
+			if (!handle_append(tokens, cmd))
+				return (0);
 		}
-		else if (current->type == HEREDOC)
+		else if ((*tokens)->type == WORD)
 		{
-			// Heredoc: <<
-			if (!handle_heredoc(current_cmd, &current))
-				return (cleanup_and_return(&command_list, current_cmd), NULL);
-			continue;
+			if (!add_arg_to_command(cmd, *tokens))
+				return (0);
+			*tokens = (*tokens)->next;
 		}
-		else if (current->type == PIPE)
-		{
-			// Pipe: finaliser la commande courante et en créer une nouvelle
-			if (!finalize_command(&command_list, &current_cmd))
-				return (cleanup_and_return(&command_list, NULL), NULL);
-			current_cmd = init_command();
-			if (!current_cmd)
-				return (cleanup_and_return(&command_list, NULL), NULL);
-		}
-
-		current = current->next;
+		else
+			*tokens = (*tokens)->next;
 	}
+	return (1);
+}
 
-	// Finaliser la dernière commande
-	if (current_cmd)
-		finalize_command(&command_list, &current_cmd);
+void	append_command(t_command **cmds, t_command *new_cmd)
+{
+	t_command	*last;
 
-	return (command_list);
+	if (!new_cmd)
+		return ;
+	if (!*cmds)
+	{
+		*cmds = new_cmd;
+		return ;
+	}
+	last = get_last_command(*cmds);
+	last->next = new_cmd;
+}
+
+t_command	*parser(t_token *tokens)
+{
+	t_command	*cmds;
+	t_command	*current;
+
+	if (!validate_tokens(tokens))
+		return (NULL);
+	cmds = NULL;
+	while (tokens && tokens->type != END)
+	{
+		current = new_command();
+		if (!current)
+		{
+			free_commands(cmds);
+			return (NULL);
+		}
+		if (!parse_simple_command(&tokens, current))
+		{
+			free_command(current);
+			free_commands(cmds);
+			return (NULL);
+		}
+		append_command(&cmds, current);
+		if (tokens && tokens->type == PIPE)
+			tokens = tokens->next;
+	}
+	return (cmds);
 }

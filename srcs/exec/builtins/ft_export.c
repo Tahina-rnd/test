@@ -3,15 +3,14 @@
 /*                                                        :::      ::::::::   */
 /*   ft_export.c                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: tarandri <tarandri@student.42antananarivo. +#+  +:+       +#+        */
+/*   By: miokrako <miokrako@student.42antananari    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/04 22:37:54 by tarandri          #+#    #+#             */
-/*   Updated: 2026/01/08 07:04:39 by tarandri         ###   ########.fr       */
+/*   Updated: 2026/01/08 16:00:16 by miokrako         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../../../includes/exec.h"
-
 
 static t_env	*exp_create_env_node(const char *key, const char *value)
 {
@@ -20,7 +19,7 @@ static t_env	*exp_create_env_node(const char *key, const char *value)
 	new_node = (t_env *)malloc(sizeof(t_env));
 	if (!new_node)
 		return (NULL);
-	new_node->key = ft_strdup(key); // mbola ovaina ft_strdup
+	new_node->key = ft_strdup(key);
 	if (value != NULL)
 		new_node->value = strdup(value);
 	else
@@ -133,33 +132,13 @@ int	ft_export(t_shell *shell, char **args)
 		}
 		key = extract_key(args[i]);
 		value = extract_value(args[i]);
-		
-		// ✅ FIX : Si pas de '=', ajouter la variable avec value=NULL
 		if (value)
 		{
 			update_or_add_env(shell, key, value);
 			free(value);
 		}
 		else
-		{
-			// Export VAR (sans =) : ajouter avec value=NULL si n'existe pas
-			t_env *current = shell->env;
-			int found = 0;
-			while (current)
-			{
-				if (ft_strcmp(current->key, key) == 0)
-				{
-					found = 1;
-					break;
-				}
-				current = current->next;
-			}
-			if (!found)
-			{
-				// Ajouter la variable sans valeur
-				exp_add_env_node_back(&shell->env, exp_create_env_node(key, NULL));
-			}
-		}
+			update_or_add_env(shell, key, NULL);
 		free(key);
 		i++;
 	}

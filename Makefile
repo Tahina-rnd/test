@@ -1,43 +1,44 @@
 NAME = minishell
 CC = cc
-CFLAGS = -Wall -Wextra -Werror -g3
+CFLAGS = -Wall -Wextra -Werror -g
 RM = rm -rf
 
 SRCS =  srcs/main.c \
+		srcs/parsing/lexer/lexer.c \
+		srcs/parsing/lexer/lexer_utils.c \
+		srcs/parsing/lexer/lexer_word.c \
+		srcs/parsing/lexer/handle_redir.c \
+		srcs/parsing/parser/parser.c \
+		srcs/parsing/parser/parser_utils1.c \
+		srcs/parsing/parser/parser_utils2.c \
+		srcs/parsing/parser/parser_args.c \
+		srcs/parsing/parser/parser_redir1.c \
+		srcs/parsing/parser/parser_redir2.c \
+		srcs/parsing/expander/expander.c \
+		srcs/parsing/expander/expander_var1.c \
+		srcs/parsing/expander/expander_var2.c \
+		srcs/parsing/expander/expander_split.c \
+		srcs/parsing/expander/expander_utils.c \
+		srcs/parsing/env/env_duplicate.c \
+		srcs/parsing/env/env_dup_utils.c \
+		srcs/parsing/env/env_to_array.c \
 		srcs/parsing/utils/ft_strcmp.c \
 		srcs/parsing/utils/ft_strndup.c \
-		srcs/parsing/tokenizer/extract_word.c \
-		srcs/parsing/tokenizer/token_checker.c \
-		srcs/parsing/tokenizer/token.c \
-		srcs/parsing/tokenizer/tokenizer_utils.c \
-		srcs/parsing/tokenizer/tokenizer.c \
-		srcs/parsing/expansion/expand_env.c \
-		srcs/parsing/expansion/expand_exit.c \
-		srcs/parsing/expansion/expand_utils.c \
-		srcs/parsing/expansion/expander.c \
-		srcs/parsing/expansion/word_split.c \
-		srcs/parsing/expansion/expand_commands.c \
-		srcs/parsing/parser/add_args.c \
-		srcs/parsing/parser/free_cmd.c \
-		srcs/parsing/parser/handle_redir.c \
-		srcs/parsing/parser/redir_utils.c \
-		srcs/parsing/parser/parser.c \
-		srcs/parsing/parser/ambiguous_redir.c \
-		srcs/parsing/parser/check_ambiguous.c \
-		srcs/parsing/env/env_dup_utils.c \
-		srcs/parsing/env/env_duplicate.c \
-		srcs/parsing/env/env_to_array.c \
+		srcs/parsing/utils/ft_error.c\
 		srcs/exec/executor/exec.c \
-		srcs/exec/builtins/builtins.c\
-		srcs/exec/builtins/ft_builtins.c\
-		srcs/exec/redirection/handle_redirection.c \
-		srcs/exec/utils/utils_env.c\
-		srcs/exec/utils/utils_free.c\
-		srcs/exec/signal/signal.c \
-		srcs/exec/redirection/heredoc.c \
-		srcs/exec/utils/get_next_line.c \
+		srcs/exec/executor/exec_child.c \
+		srcs/exec/executor/exec_cmd.c \
+		srcs/exec/builtins/builtins.c \
+		srcs/exec/builtins/ft_builtins.c \
 		srcs/exec/builtins/ft_export.c \
-		srcs/exec/builtins/ft_unset.c
+		srcs/exec/builtins/ft_unset.c \
+		srcs/exec/redirection/handle_redirection.c \
+		srcs/exec/redirection/redir_utils.c \
+		srcs/exec/redirection/heredoc.c \
+		srcs/exec/signal/signal.c \
+		srcs/exec/utils/utils_env.c \
+		srcs/exec/utils/utils_free.c \
+		srcs/exec/utils/get_next_line.c
 
 OBJS = $(SRCS:.c=.o)
 

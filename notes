@@ -1,17 +1,11 @@
-6- cd -; pwd                          # ancien répertoire
-cd --; pwd                         # $HOME
-
 7- message d'erreur structure error : bash: export: `12invalid=value': not a valid identifier
 
-8-  minishell> echo $"USER''"
-minishell> $USER'' | bash> USER''
-echo "$"USER''"" bash : $USER
-echo soratra$"USER''"
-minishell> soratra$USER'' | bash> soratraUSER''
-
-9 - error message bash-5.1$ echo >
+mitovy - error message bash-5.1$ echo >
 bash: syntax error near unexpected token `newline'
 
+~/Downloads/minishell$  << m > | << l > l
+mitovy bash: syntax error near unexpected token `|'
+> m
 
 13 - echo 'test => deux messages d'erreur
 minishell: syntax error: unclosed quote
@@ -25,54 +19,22 @@ minishell> cat << EOF >
 minishell: syntax error near unexpected token `>'
 minishell>
 
-8- minishell> cat | ls
-includes  libft  Makefile  minishell  notes  srcs  testeur
-^Cminishell>
 
-tarandri@c1r4s14:~/Music/minishell_mioky$ cat | ls
-includes  libft  Makefile  minishell  notes  srcs  testeur
-^C
-tarandri@c1r4s14:~/Music/minishell_mioky$
+cd maina
+------------------------------------
 
-
-
-11-
-
-minishell> exit "              5"
-🔍 DEBUG tokenize: word='exit', was_quoted=0
-🔍 DEBUG tokenize: word='"              5"', was_quoted=1
-🔍 DEBUG expand AVANT: value='exit', was_quoted=0
-🔍 DEBUG expand APRES: value='exit', was_quoted=0
-🔍 DEBUG expand AVANT: value='"              5"', was_quoted=1
-🔍 DEBUG expand APRES: value='              5', was_quoted=1
-exit
-minishell: exit:               5: numeric argument required
-
-bash-5.1$ exit "             5"
-exit
-
-c1r4s13% bash  --posix
-bash-5.1$ exit "           5              "
-exit
+ls > $tsymety
+minishell: $tsymety: ambiguous redirect et creer le fichier
+minishell> > 1 > 2 ( tsy mandeha)
+minishell> < rine ( tsy mandeha)
 
 
-----------------
-bash-5.1$ export LULU='    file1   file2    '
-bash-5.1$ cat "$LULU"$LULU"$LULU"
-cat: '    file1   file2    ': No such file or directory
-cat: file1: No such file or directory
-cat: file2: No such file or directory
-cat: '    file1   file2    ': No such file or directory
-bash-5.1$ 
+au lancement : ./minishell                                                                                                                                         [15:00:17]
+minishell> cd
+minishell: cd: too many arguments
+minishell> cd
 
--------
-export VAR="file1 file2" > ft_split(espace)
-> cat "fddfd"$VAR
+update lexer >>> difference entre "" et '', si $ dans "" 
 
+minishell> > 1 > 2
 
-cat "fgfgfg "$VAR" sdfsdf"
-field_split($VAR,space);
-concate("fgfgfg "file1 file2" sdfsdf") > creer token vaovao (separation espace)
-cat "file1 file2 "
-
-cat file1 file2

@@ -6,7 +6,7 @@
 /*   By: miokrako <miokrako@student.42antananari    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/24 11:01:22 by miokrako          #+#    #+#             */
-/*   Updated: 2026/01/05 10:26:32 by miokrako         ###   ########.fr       */
+/*   Updated: 2026/01/09 12:10:03 by miokrako         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,6 +16,9 @@
 # include "parsing.h"
 
 // ========== PATH & EXECUTION ==========
+
+void	child_process(t_command *cmd, t_shell *shell, int prev[2], int curr[2]);
+void	wait_all_children(pid_t last_pid, t_shell *shell);
 char	*get_path(t_env *env, char *cmd);
 void	exec_simple_cmd(t_command *cmd, t_env *env);
 void	executor(t_shell *shell);
@@ -63,7 +66,7 @@ void	setup_heredoc_signals(void);
 void	free_tab(char **tab);
 void	free_tab_partial(char **tab, int count);
 void	free_env(t_env *env);
-void	free_command(t_command *cmd);
+// void	free_command(t_command *cmd);
 void	free_commands(t_command *commands);
 void	cleanup_shell(t_shell *shell);
 void	cleanup_child(t_shell *shell);
@@ -71,5 +74,8 @@ void	cleanup_child(t_shell *shell);
 // ========== UTILITY ==========
 char	*get_next_line(int fd);
 void	exp_add_env_node_back(t_env **head, t_env *new_node);
+
+
+void	exec_simple_cmd_with_array(t_command *cmd, t_env *env, char **args_array);
 
 #endif

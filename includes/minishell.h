@@ -6,7 +6,7 @@
 /*   By: tarandri <tarandri@student.42antananarivo. +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/18 20:22:34 by tarandri          #+#    #+#             */
-/*   Updated: 2026/01/08 05:26:22 by tarandri         ###   ########.fr       */
+/*   Updated: 2026/01/08 22:01:21 by tarandri         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,6 +17,7 @@
 # include <unistd.h>
 # include <stdio.h>
 # include <string.h>
+# include <limits.h>
 # include <fcntl.h>
 # include <sys/types.h>
 # include <sys/wait.h>
@@ -61,17 +62,22 @@ typedef struct s_redir
 {
     char            *file;
     int             fd;
-    int             append_mode;  // 0 = >, 1 = >>
+    int             append_mode;
     struct s_redir  *next;
 } t_redir;
 
+typedef struct s_arg
+{
+    char *value;
+    int   was_quoted;
+} t_arg;
+
 typedef struct s_command
 {
-    char            **args;
-	int             *args_was_quoted;
-    t_redir         *input_redirection;
-    t_redir         *output_redirection;  // Liste unique pour > et >>
-    t_redir         *heredoc;
+    t_arg			*args;
+    t_redir			*input_redirection;
+    t_redir			*output_redirection;
+    t_redir			*heredoc;
     struct s_command *next;
 } t_command;
 

@@ -3,30 +3,32 @@
 /*                                                        :::      ::::::::   */
 /*   ft_builtins.c                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: tarandri <tarandri@student.42antananarivo. +#+  +:+       +#+        */
+/*   By: miokrako <miokrako@student.42antananari    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/18 21:31:02 by miokrako          #+#    #+#             */
-/*   Updated: 2026/01/07 17:17:05 by tarandri         ###   ########.fr       */
+/*   Updated: 2026/01/09 09:30:04 by miokrako         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../../../includes/exec.h"
 
-static int	ft_is_numeric(char *str)
+static int	is_valid_exit_arg(char *str)
 {
 	int	i;
 
 	i = 0;
+	while (str[i] == ' ' || (str[i] >= 9 && str[i] <= 13))
+		i++;
 	if (str[i] == '-' || str[i] == '+')
 		i++;
-	if (!str[i])
+	if (!ft_isdigit(str[i]))
 		return (0);
-	while (str[i])
-	{
-		if (!ft_isdigit(str[i]))
-			return (0);
+	while (ft_isdigit(str[i]))
 		i++;
-	}
+	while (str[i] == ' ' || (str[i] >= 9 && str[i] <= 13))
+		i++;
+	if (str[i] != '\0')
+		return (0);
 	return (1);
 }
 
@@ -88,57 +90,75 @@ int	builtin_pwd(void)
 	}
 }
 
-static int	handle_exit_numeric_error(char *arg, t_shell *shell)
-{
-	ft_putstr_fd("minishell: exit: ", 2);
-	ft_putstr_fd(arg, 2);
-	ft_putstr_fd(": numeric argument required\n", 2);
-	cleanup_shell(shell);
-	exit(2);
-}
-
 static int	handle_too_many_args(void)
 {
 	ft_putstr_fd("minishell: exit: too many arguments\n", 2);
 	return (1);
 }
+int	ft_atoll_safe(const char *str, long long *result)
+{
+	unsigned long long	res;
+	int					sign;
+	int					i;
+
+	res = 0;
+	sign = 1;
+	i = 0;
+	while (str[i] == ' ' || (str[i] >= 9 && str[i] <= 13))
+		i++;
+	if (str[i] == '-' || str[i] == '+')
+	{
+		if (str[i++] == '-')
+			sign = -1;
+	}
+	while (str[i] >= '0' && str[i] <= '9')
+	{
+		if (sign == 1 && (res > LLONG_MAX / 10 || (res == LLONG_MAX / 10
+					&& (str[i] - '0') > LLONG_MAX % 10)))
+			return (-1);
+		if (sign == -1 && (res > (unsigned long long)LLONG_MAX + 1 / 10
+				|| (res == ((unsigned long long)LLONG_MAX + 1) / 10 && (str[i]
+						- '0') > 8)))
+			return (-1);
+		res = res * 10 + (str[i++] - '0');
+	}
+	*result = res * sign;
+	return (0);
+}
+static void	exit_with_error(char *arg, t_shell *shell)
+{
+	ft_putstr_fd("minishell: exit: ", 2);
+	ft_putstr_fd(arg, 2);
+	ft_putstr_fd(": numeric argument required\n", 2);
+	if (shell->commands->next)
+		cleanup_child(shell);
+	else
+		cleanup_shell(shell);
+	exit(2);
+}
 
 int	builtin_exit(char **args, t_shell *shell)
 {
-	int	exit_code;
+	long long	exit_code;
+
 	if (!shell->commands->next)
 		ft_putstr_fd("exit\n", 2);
-
-	exit_code = 0;
 	if (args[1])
 	{
-		if (!ft_is_numeric(args[1]))
-		{
-			handle_exit_numeric_error(args[1], shell);
-			if (shell->commands->next)
-			{
-				cleanup_child(shell);
-				exit(2);
-			}
-			cleanup_shell(shell);
-			exit(2);
-		}
-		else if (args[2])
+		if (!is_valid_exit_arg(args[1]) || ft_atoll_safe(args[1], &exit_code) ==
+			-1)
+			exit_with_error(args[1], shell);
+		if (args[2])
 			return (handle_too_many_args());
-		else
-			exit_code = ft_atoi(args[1]) % 256;
 	}
 	else
 		exit_code = shell->last_exit_status;
 	if (shell->commands->next)
-	{
 		cleanup_child(shell);
-		exit(exit_code);
-	}
-	cleanup_shell(shell);
-	exit(exit_code);
+	else
+		cleanup_shell(shell);
+	exit(exit_code % 256);
 }
-
 
 int	builtin_env(t_env *env)
 {
@@ -190,7 +210,7 @@ int	builtin_cd(char **args, t_env *env)
 	if (args[2])
 	{
 		ft_putstr_fd("minishell: cd: too many arguments\n", 2);
-		return(1);
+		return (1);
 	}
 	if (!old_pwd)
 	{

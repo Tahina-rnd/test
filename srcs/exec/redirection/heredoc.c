@@ -6,7 +6,7 @@
 /*   By: miokrako <miokrako@student.42antananari    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/08 15:45:17 by miokrako          #+#    #+#             */
-/*   Updated: 2026/01/03 16:08:16 by miokrako         ###   ########.fr       */
+/*   Updated: 2026/01/08 16:00:35 by miokrako         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -114,18 +114,12 @@ static char	*clean_delimiter(char *delimiter)
 
 static int	handle_heredoc_interrupt(char *line, int fd, char *filename)
 {
-	// Libérer la ligne si elle existe
 	if (line)
 		free(line);
-
-	// Fermer le fichier
 	if (fd != -1)
 		close(fd);
-
-	// Supprimer le fichier temporaire
 	if (filename)
 		unlink(filename);
-
 	return (-1);
 }
 
@@ -135,7 +129,6 @@ static int	handle_heredoc_eof(char *delimiter, int fd)
 	ft_putstr_fd("by end-of-file (wanted `", 2);
 	ft_putstr_fd(delimiter, 2);
 	ft_putstr_fd("')\n", 2);
-
 	close(fd);
 	return (0);
 }
@@ -144,55 +137,37 @@ int	create_heredoc_file(char *delimiter, char *filename)
 	int		fd;
 	char	*line;
 
-	// Ouvrir le fichier temporaire
 	fd = open(filename, O_CREAT | O_WRONLY | O_TRUNC, 0644);
 	if (fd == -1)
 	{
 		perror("minishell: heredoc");
 		return (-1);
 	}
-
-	// Configurer les signaux pour heredoc
 	setup_heredoc_signals();
 	g_received_signal = 0;
-
 	while (1)
 	{
-		// Vérifier si un signal a été reçu AVANT readline
-		// (cas où le signal arrive pendant le traitement)
 		if (g_received_signal == SIGINT)
 		{
 			close(fd);
 			unlink(filename);
 			return (-1);
 		}
-
-		// Lire une ligne avec le prompt ">"
 		line = readline("> ");
-
-		// VÉRIFICATION CRITIQUE: Signal reçu pendant readline?
 		if (g_received_signal == SIGINT)
 		{
-			// Le signal handler a déjà affiché ^C\n
-			// On nettoie et on sort
 			return (handle_heredoc_interrupt(line, fd, filename));
 		}
-
-		// EOF (Ctrl+D) - readline retourne NULL
 		if (!line)
 		{
 			return (handle_heredoc_eof(delimiter, fd));
 		}
-
-		// Vérifier si on a atteint le délimiteur
 		if (ft_strcmp(line, delimiter) == 0)
 		{
 			free(line);
 			close(fd);
 			return (0);
 		}
-
-		// Écrire la ligne dans le fichier
 		write(fd, line, ft_strlen(line));
 		write(fd, "\n", 1);
 		free(line);
@@ -243,7 +218,6 @@ static void	replace_heredoc_file(char *tmpfile)
 	final_file = ft_strjoin(tmpfile, ".final");
 	if (!final_file)
 		return ;
-
 	fd_in = open(final_file, O_RDONLY);
 	fd_final = open(tmpfile, O_WRONLY | O_TRUNC);
 	if (fd_in != -1 && fd_final != -1)
@@ -265,7 +239,6 @@ static void	expand_heredoc_content(t_shell *shell, char *tmpfile)
 	final_file = ft_strjoin(tmpfile, ".final");
 	if (!final_file)
 		return ;
-
 	fd_in = open(tmpfile, O_RDONLY);
 	fd_out = open(final_file, O_CREAT | O_WRONLY | O_TRUNC, 0644);
 	if (fd_in != -1 && fd_out != -1)
@@ -290,7 +263,7 @@ static void	expand_heredoc_content(t_shell *shell, char *tmpfile)
 /* ========================================================================== */
 
 static int	child_heredoc_process(char *clean_delim, char *tmpfile,
-								int do_expand, t_shell *shell)
+		int do_expand, t_shell *shell)
 {
 	if (create_heredoc_file(clean_delim, tmpfile) == -1)
 	{
@@ -365,7 +338,7 @@ static char	*generate_tmpfile_name(char *delimiter, int index)
 }
 
 static int	process_single_heredoc_node(t_redir *heredoc_node, t_shell *shell,
-											int index)
+		int index)
 {
 	int		do_expand;
 	char	*clean_delim;
