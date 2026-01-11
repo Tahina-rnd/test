@@ -1,0 +1,86 @@
+7- message d'erreur structure error : bash: export: `12invalid=value': not a valid identifier
+
+mitovy - error message bash-5.1$ echo >
+bash: syntax error near unexpected token `newline'
+
+~/Downloads/minishell$  << m > | << l > l
+mitovy bash: syntax error near unexpected token `|'
+> m
+
+13 - echo 'test => deux messages d'erreur
+minishell: syntax error: unclosed quote
+minishell: syntax error near unexpected token `unclosed quote'
+
+7 -
+bash-5.1$ ls << EOF >
+> EOF
+bash: syntax error near unexpected token `newline'
+minishell> cat << EOF >
+minishell: syntax error near unexpected token `>'
+minishell>
+
+------------
+PARSING >>> pipeline : lexer > parser > expand > globing > argv[] > exec
+ dans expand : (t_command
+	if
+ 	+++ Word split
+
+
+
+1-otrany efa vitanla 9janvier
+minishell> ls > $re
+minishell: $re: ambiguous redirect
+minishell> echo $?
+0
+minishell> ls
+'$re'	    libft      minishell   readline.supp   save
+ includes   Makefile   notes	   rl.supp	   srcs
+minishell>
+
+mioky@mioky-GL552JX:~/Musique/M10ky$ ls > $re
+bash: $re : redirection ambiguë
+mioky@mioky-GL552JX:~/Musique/M10ky$ echo $?
+1
+mioky@mioky-GL552JX:~/Musique/M10ky$ ls
+includes  libft  Makefile  minishell  notes  readline.supp  rl.supp  save  srcs
+mioky@mioky-GL552JX:~/Musique/M10ky$
+
+2- VITA
+fafana fotsiny if (shell.commands->args)  anaty main.c
+minishell> > 1
+minishell> ls
+includes  libft  Makefile  minishell  notes  readline.supp  rl.supp  save  srcs
+minishell>
+
+bash-5.2$ > 1
+bash-5.2$ ls
+1  includes	libft  Makefile  minishell  notes  readline.supp  rl.supp  save  srcs
+bash-5.2$
+
+3- VITA
+minishell> cd
+minishell: cd: too many arguments
+minishell> cd
+minishell> cd
+
+
+
+
+4 - VITA // checkeko tokens types == END(main.c : 78)
+minishell>
+minishell> echo $?
+1
+minishell>
+
+mioky@mioky-GL552JX:~$
+mioky@mioky-GL552JX:~$ echo $?
+0
+mioky@mioky-GL552JX:~$
+
+
+--leaks
+cd maina VITA
+heredoc VITA
+command not found . sy .. VITA
+exit
+
