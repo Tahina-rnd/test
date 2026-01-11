@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   handle_redirection.c                               :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: miokrako <miokrako@student.42antananari    +#+  +:+       +#+        */
+/*   By: tarandri <tarandri@student.42antananarivo. +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/24 13:32:52 by miokrako          #+#    #+#             */
-/*   Updated: 2026/01/08 16:00:31 by miokrako         ###   ########.fr       */
+/*   Updated: 2026/01/11 14:32:36 by tarandri         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,7 +22,7 @@ static int	handle_input_redirections(t_redir *input_list)
 	last_redir = get_last_redir(input_list);
 	if (!last_redir || !last_redir->file)
 	{
-		ft_putstr_fd("minishell: ambiguous redirect\n", 2);
+		// ft_putstr_fd("minishell: ambiguous redirect\n", 2);
 		return (1);
 	}
 	fd = open(last_redir->file, O_RDONLY);
@@ -59,7 +59,7 @@ static int	handle_all_output_redirections(t_redir *output_list)
 	{
 		if (!current->file)
 		{
-			ft_putstr_fd("minishell: ambiguous redirect\n", 2);
+			// ft_putstr_fd("minishell: ambiguous redirect\n", 2);
 			return (1);
 		}
 		if (current->append_mode)
@@ -82,7 +82,7 @@ static int	handle_all_output_redirections(t_redir *output_list)
 	last_redir = current;
 	if (!last_redir->file)
 	{
-		ft_putstr_fd("minishell: ambiguous redirect\n", 2);
+		// ft_putstr_fd("minishell: ambiguous redirect\n", 2);
 		return (1);
 	}
 	if (last_redir->append_mode)

@@ -6,13 +6,13 @@
 /*   By: tarandri <tarandri@student.42antananarivo. +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/04 22:42:18 by tarandri          #+#    #+#             */
-/*   Updated: 2026/01/11 13:54:25 by tarandri         ###   ########.fr       */
+/*   Updated: 2026/01/11 14:03:51 by tarandri         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../../../includes/parsing.h"
 
-static int	count_env_nodes(t_env *env)
+int	count_env_nodes(t_env *env)
 {
 	int		count;
 	t_env	*current;

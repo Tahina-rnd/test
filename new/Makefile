@@ -24,7 +24,8 @@ SRCS_PARSING = srcs/parsing/lexer/lexer.c \
 
 # Env Sources (On retire env_to_array.c car utils_env.c gere deja ca)
 SRCS_ENV     = srcs/parsing/env/env_dup_utils.c \
-              srcs/parsing/env/env_duplicate.c
+              srcs/parsing/env/env_duplicate.c \
+              srcs/parsing/env/env_to_array.c
 
 # Exec Sources
 SRCS_EXEC    = srcs/exec/executor/exec.c \
@@ -40,6 +41,7 @@ SRCS_EXEC    = srcs/exec/executor/exec.c \
               srcs/exec/utils/utils_env.c \
               srcs/exec/utils/utils_free.c \
               srcs/exec/utils/get_next_line.c \
+              srcs/exec/utils/args_conversion.c \
               srcs/exec/signal/signal.c
 
 SRCS        = $(SRCS_MAIN) $(SRCS_PARSING) $(SRCS_ENV) $(SRCS_EXEC)

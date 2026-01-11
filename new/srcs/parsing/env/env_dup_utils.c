@@ -6,7 +6,7 @@
 /*   By: tarandri <tarandri@student.42antananarivo. +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/25 12:04:59 by tarandri          #+#    #+#             */
-/*   Updated: 2026/01/11 13:50:40 by tarandri         ###   ########.fr       */
+/*   Updated: 2026/01/11 14:37:14 by tarandri         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,6 +16,8 @@ char	*get_env_value(t_env *env_list, char *key)
 {
 	t_env	*current;
 
+	if (!key)
+		return (NULL);
 	current = env_list;
 	while (current)
 	{
@@ -24,7 +26,6 @@ char	*get_env_value(t_env *env_list, char *key)
 		current = current->next;
 	}
 	return (NULL);
-// 	return (ft_strdup(""));
 }
 
 void	free_env_list(t_env *env_list)

@@ -6,13 +6,11 @@
 /*   By: tarandri <tarandri@student.42antananarivo. +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/26 07:44:36 by tarandri          #+#    #+#             */
-/*   Updated: 2026/01/11 11:41:12 by tarandri         ###   ########.fr       */
+/*   Updated: 2026/01/11 14:51:39 by tarandri         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../../../includes/parsing.h"
-
-/* --- PARTIE 1 : UTILITAIRES LISTE ARGUMENTS --- */
 
 static t_arg	*new_arg_node(void)
 {
@@ -192,9 +190,12 @@ void	expander(t_shell *shell, t_command *cmd)
 			free(curr);
 			curr = next_save;
 		}
+		// ⚠️ IMPORTANT : Ne PAS expander les délimiteurs heredoc
+		// On expande seulement input_redirection et output_redirection
 		if (!process_redirs(c->input_redirection, shell)
 			|| !process_redirs(c->output_redirection, shell))
 			shell->last_exit_status = 1;
+		// c->heredoc n'est PAS expansé ici (délimiteur brut)
 		c = c->next;
 	}
 }

@@ -6,7 +6,7 @@
 /*   By: tarandri <tarandri@student.42antananarivo. +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/18 20:22:34 by tarandri          #+#    #+#             */
-/*   Updated: 2026/01/10 21:41:23 by tarandri         ###   ########.fr       */
+/*   Updated: 2026/01/11 14:57:48 by tarandri         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -52,17 +52,17 @@ typedef enum e_token_type
 
 typedef enum e_quote_type
 {
-    QUOTE_NONE,
-    QUOTE_SINGLE,
-    QUOTE_DOUBLE
-}   t_quote_type;
+	QUOTE_NONE,
+	QUOTE_SINGLE,
+	QUOTE_DOUBLE
+}	t_quote_type;
 
 typedef struct s_segment
 {
-    char            *value;
-    t_quote_type    quote;
-    struct s_segment *next;
-}   t_segment;
+	char            *value;
+	t_quote_type    quote;
+	struct s_segment *next;
+}	t_segment;
 
 typedef struct s_token
 {

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   builtins.c                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: miokrako <miokrako@student.42antananari    +#+  +:+       +#+        */
+/*   By: tarandri <tarandri@student.42antananarivo. +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/17 21:32:09 by miokrako          #+#    #+#             */
-/*   Updated: 2026/01/09 16:57:58 by miokrako         ###   ########.fr       */
+/*   Updated: 2026/01/11 14:30:56 by tarandri         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -51,41 +51,6 @@ int	is_builtin(char *cmd)
 	return (0);
 }
 
-// Helper function to convert t_arg array to char** array
-static char	**convert_args_for_builtins(t_arg *args)
-{
-	char	**result;
-	int		count;
-	int		i;
-
-	/* MODIFICATION : Retourner un tableau vide au lieu de NULL */
-	if (!args)
-	{
-		result = (char **)malloc(sizeof(char *) * 1);
-		if (!result)
-			return (NULL);
-		result[0] = NULL;
-		return (result);
-	}
-
-	count = 0;
-	while (args[count].value)
-		count++;
-
-	result = (char **)malloc(sizeof(char *) * (count + 1));
-	if (!result)
-		return (NULL);
-
-	i = 0;
-	while (i < count)
-	{
-		result[i] = args[i].value;
-		i++;
-	}
-	result[i] = NULL;
-	return (result);
-}
-
 static int	execute_builtin_part1(t_shell *shell, char **args_array)
 {
 	if (ft_strcmp(args_array[0], "echo") == 0)
@@ -110,15 +75,16 @@ static int	execute_builtin_part2(t_shell *shell, char **args_array)
 	return (1);
 }
 
+// NOUVELLE VERSION
 int	execute_builtin(t_command *cmd, t_shell *shell)
 {
 	int		result;
 	char	**args_array;
 
-	if (!cmd || !cmd->args || !cmd->args[0].value)
+	if (!cmd || !cmd->args || !cmd->args->value)
 		return (1);
 
-	args_array = convert_args_for_builtins(cmd->args);
+	args_array = args_to_array(cmd->args);
 	if (!args_array)
 		return (1);
 

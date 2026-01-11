@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ft_unset.c                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: miokrako <miokrako@student.42antananari    +#+  +:+       +#+        */
+/*   By: tarandri <tarandri@student.42antananarivo. +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/04 22:41:18 by tarandri          #+#    #+#             */
-/*   Updated: 2026/01/08 16:00:22 by miokrako         ###   ########.fr       */
+/*   Updated: 2026/01/11 14:39:01 by tarandri         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,7 +33,7 @@ static void	remove_env_node(t_env **head, char *key)
 	t_env	*current;
 	t_env	*prev;
 
-	if (!head || !*head)
+	if (!head || !*head || !key)
 		return ;
 	current = *head;
 	prev = NULL;

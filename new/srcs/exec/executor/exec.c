@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   exec.c                                             :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: miokrako <miokrako@student.42antananari    +#+  +:+       +#+        */
+/*   By: tarandri <tarandri@student.42antananarivo. +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/08 20:14:46 by miokrako          #+#    #+#             */
-/*   Updated: 2026/01/09 11:45:04 by miokrako         ###   ########.fr       */
+/*   Updated: 2026/01/11 14:30:22 by tarandri         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -109,8 +109,8 @@ void	executor(t_shell *shell)
 	cmd = shell->commands;
 	if (process_heredocs(shell) != 0)
 		return ;
-	if (cmd && !cmd->next && cmd->args && cmd->args[0].value
-		&& check_parent_builtin(cmd->args[0].value, shell))
+	if (cmd && !cmd->next && cmd->args && cmd->args->value  // ← Changé
+		&& check_parent_builtin(cmd->args->value, shell))  // ← Changé
 	{
 		exec_builtin_parent(cmd, shell);
 		cleanup_heredocs(shell);

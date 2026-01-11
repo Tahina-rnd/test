@@ -6,7 +6,7 @@
 /*   By: tarandri <tarandri@student.42antananarivo. +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/18 21:22:34 by tarandri          #+#    #+#             */
-/*   Updated: 2026/01/11 10:24:43 by tarandri         ###   ########.fr       */
+/*   Updated: 2026/01/11 14:10:17 by tarandri         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -48,11 +48,16 @@ t_command	*create_command(void);
 void		cmd_add_back(t_command **lst, t_command *new);
 int			add_arg(t_command *cmd, t_token *token);
 void		free_commands(t_command *cmds);
+
 int			parse_redir(t_command *cmd, t_token **curr_token);
 
 // EXPANDER
-void	expander(t_shell *shell, t_command *cmd);
-char	*ft_strjoin_free(char *s1, char *s2);
-char	*expand_text(char *str, t_shell *shell);
+void		expander(t_shell *shell, t_command *cmd);
+char		*ft_strjoin_free(char *s1, char *s2);
+char		*expand_text(char *str, t_shell *shell);
+
+// other
+int			count_env_nodes(t_env *env);
+void		free_command(t_command *cmd);
 
 #endif

@@ -6,7 +6,7 @@
 /*   By: tarandri <tarandri@student.42antananarivo. +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/24 11:01:22 by miokrako          #+#    #+#             */
-/*   Updated: 2026/01/11 13:55:13 by tarandri         ###   ########.fr       */
+/*   Updated: 2026/01/11 14:25:36 by tarandri         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -64,13 +64,14 @@ void	setup_heredoc_signals(void);
 void	free_tab(char **tab);
 void	free_tab_partial(char **tab, int count);
 void	free_env(t_env *env);
-// void	free_command(t_command *cmd);
-void	free_commands(t_command *commands);
 void	cleanup_shell(t_shell *shell);
 void	cleanup_child(t_shell *shell);
 
 // ========== UTILITY ==========
 char	*get_next_line(int fd);
 void	exp_add_env_node_back(t_env **head, t_env *new_node);
+
+// Dans new/includes/exec.h, ajoutez cette ligne avec les autres prototypes :
+char	**args_to_array(t_arg *args);
 
 #endif

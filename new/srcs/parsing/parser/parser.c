@@ -6,7 +6,7 @@
 /*   By: tarandri <tarandri@student.42antananarivo. +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/26 07:45:47 by tarandri          #+#    #+#             */
-/*   Updated: 2026/01/10 21:28:30 by tarandri         ###   ########.fr       */
+/*   Updated: 2026/01/11 14:58:39 by tarandri         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,22 +38,24 @@ static int	process_token(t_command **curr_cmd, t_token **tokens,
 {
 	if ((*tokens)->type == WORD)
 	{
+		// ✅ Ajoute le mot comme argument
 		if (!add_arg(*curr_cmd, *tokens))
 			return (0);
 	}
-	else if ((*tokens)->type >= PIPE && (*tokens)->type <= APPEND)
+	else if ((*tokens)->type >= REDIRECT_IN && (*tokens)->type <= HEREDOC)
 	{
-		if ((*tokens)->type == PIPE)
-		{
-			if (!handle_pipe(curr_cmd, tokens))
-				return (0);
-			cmd_add_back(head, *curr_cmd);
-		}
-		else
-		{
-			if (!parse_redir(*curr_cmd, tokens))
-				return (0);
-		}
+		// ✅ CRITIQUE : Parse la redirection
+		// Cette fonction va consommer le token suivant (le fichier/délimiteur)
+		if (!parse_redir(*curr_cmd, tokens))
+			return (0);
+		// ⚠️ IMPORTANT : parse_redir avance déjà tokens sur le fichier
+		// Donc on ne doit PAS avancer ici, c'est fait en fin de boucle
+	}
+	else if ((*tokens)->type == PIPE)
+	{
+		if (!handle_pipe(curr_cmd, tokens))
+			return (0);
+		cmd_add_back(head, *curr_cmd);
 	}
 	return (1);
 }
@@ -65,7 +67,7 @@ t_command	*parser(t_token *tokens)
 
 	if (!tokens)
 		return (NULL);
-	if (tokens->type == PIPE) // Pipe en tout premier token
+	if (tokens->type == PIPE)
 	{
 		printf("Minishell: syntax error near unexpected token `|'\n");
 		return (NULL);

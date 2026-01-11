@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   heredoc.c                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: miokrako <miokrako@student.42antananari    +#+  +:+       +#+        */
+/*   By: tarandri <tarandri@student.42antananarivo. +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/08 15:45:17 by miokrako          #+#    #+#             */
-/*   Updated: 2026/01/10 07:00:23 by miokrako         ###   ########.fr       */
+/*   Updated: 2026/01/11 14:54:03 by tarandri         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -74,6 +74,10 @@ void	expand_heredoc_line(char *line, int fd, t_shell *shell)
 /*                      DÉTECTION DE L'EXPANSION NÉCESSAIRE                   */
 /* ========================================================================== */
 
+/**
+ * Vérifie si le délimiteur contient des quotes
+ * Si oui, on ne doit PAS expander le contenu du heredoc
+ */
 static int	should_expand(char *delimiter)
 {
 	if (ft_strchr(delimiter, '\'') || ft_strchr(delimiter, '"'))
@@ -81,12 +85,16 @@ static int	should_expand(char *delimiter)
 	return (1);
 }
 
+/**
+ * Nettoie le délimiteur des quotes
+ * Exemple : "EOF" ou 'EOF' ou E"O"F devient EOF
+ */
 static char	*clean_delimiter(char *delimiter)
 {
 	char	*cleaned;
 	int		i;
 	int		j;
-	int		in_quote;
+	char	in_quote;
 
 	cleaned = malloc(ft_strlen(delimiter) + 1);
 	if (!cleaned)
@@ -339,6 +347,11 @@ static char	*generate_tmpfile_name(char *delimiter, int index)
 	return (result);
 }
 
+/**
+ * CORRECTION MAJEURE : 
+ * Le délimiteur ne doit JAMAIS être expansé avant d'arriver ici
+ * C'est le literal brut du token
+ */
 static int	process_single_heredoc_node(t_redir *heredoc_node, t_shell *shell,
 		int index)
 {
@@ -349,16 +362,22 @@ static int	process_single_heredoc_node(t_redir *heredoc_node, t_shell *shell,
 
 	if (!heredoc_node || !heredoc_node->file)
 		return (1);
+	
 	tmpfile = generate_tmpfile_name(heredoc_node->file, index);
 	if (!tmpfile)
 		return (1);
+	
+	// Détermine si on doit expander le contenu (pas de quotes dans le délimiteur)
 	do_expand = should_expand(heredoc_node->file);
+	
+	// Nettoie le délimiteur (enlève les quotes)
 	clean_delim = clean_delimiter(heredoc_node->file);
 	if (!clean_delim)
 	{
 		free(tmpfile);
 		return (1);
 	}
+	
 	pid = fork();
 	if (pid == -1)
 	{
@@ -377,7 +396,7 @@ static int	process_single_heredoc_node(t_redir *heredoc_node, t_shell *shell,
 			free(tmpfile);
 			return (1);
 		}
-		// if (heredoc_node->file) // verifiena lony
+		// Remplace le délimiteur par le nom du fichier temporaire
 		free(heredoc_node->file);
 		heredoc_node->file = tmpfile;
 	}

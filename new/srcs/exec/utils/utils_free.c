@@ -3,14 +3,15 @@
 /*                                                        :::      ::::::::   */
 /*   utils_free.c                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: miokrako <miokrako@student.42antananari    +#+  +:+       +#+        */
+/*   By: tarandri <tarandri@student.42antananarivo. +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/26 13:28:19 by miokrako          #+#    #+#             */
-/*   Updated: 2026/01/11 12:28:31 by miokrako         ###   ########.fr       */
+/*   Updated: 2026/01/11 14:20:39 by tarandri         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../../../includes/exec.h"
+
 
 void	free_env(t_env *env)
 {
@@ -23,39 +24,6 @@ void	free_env(t_env *env)
 		free(env->value);
 		free(env);
 		env = tmp;
-	}
-}
-
-// void	free_command(t_command *cmd)
-// {
-// 	int	i;
-
-// 	if (cmd->args)
-// 	{
-// 		i = 0;
-// 		while (cmd->args[i])
-// 		{
-// 			free(cmd->args[i]);
-// 			i++;
-// 		}
-// 		free(cmd->args);
-// 	}
-// 	if (cmd->input_redirection)
-// 		free(cmd->input_redirection);
-// 	if (cmd->output_redirection)
-// 		free(cmd->output_redirection);
-// 	free(cmd);
-// }
-
-void	free_commands(t_command *commands)
-{
-	t_command	*tmp;
-
-	while (commands)
-	{
-		tmp = commands->next;
-		free_command(commands);
-		commands = tmp;
 	}
 }
 

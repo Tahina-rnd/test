@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   exec_child.c                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: miokrako <miokrako@student.42antananari    +#+  +:+       +#+        */
+/*   By: tarandri <tarandri@student.42antananarivo. +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/08 20:13:41 by miokrako          #+#    #+#             */
-/*   Updated: 2026/01/10 08:02:30 by miokrako         ###   ########.fr       */
+/*   Updated: 2026/01/11 15:01:20 by tarandri         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,31 +33,6 @@ static void	setup_pipes(t_command *cmd, int prev_pipe[2], int curr_pipe[2])
 	}
 }
 
-// Helper function to convert t_arg array to char** array
-static char	**convert_args_to_array(t_arg *args)
-{
-	char	**result;
-	int		count;
-	int		i;
-
-	if (!args)
-		return (NULL);
-	count = 0;
-	while (args[count].value)
-		count++;
-	result = (char **)malloc(sizeof(char *) * (count + 1));
-	if (!result)
-		return (NULL);
-	i = 0;
-	while (i < count)
-	{
-		result[i] = args[i].value;
-		i++;
-	}
-	result[i] = NULL;
-	return (result);
-}
-
 void	child_process(t_command *cmd, t_shell *shell, int prev[2], int curr[2])
 {
 	int		ret;
@@ -70,12 +45,12 @@ void	child_process(t_command *cmd, t_shell *shell, int prev[2], int curr[2])
 		cleanup_child(shell);
 		exit(1);
 	}
-	if (!cmd->args || !cmd->args[0].value)
+	if (!cmd->args || !cmd->args->value)  // ← Changé de [0] à ->
 	{
 		cleanup_child(shell);
 		exit(0);
 	}
-	if (is_builtin(cmd->args[0].value))
+	if (is_builtin(cmd->args->value))  // ← Changé de [0].value à ->value
 	{
 		ret = execute_builtin(cmd, shell);
 		cleanup_child(shell);
@@ -83,7 +58,7 @@ void	child_process(t_command *cmd, t_shell *shell, int prev[2], int curr[2])
 	}
 	else
 	{
-		args_array = convert_args_to_array(cmd->args);
+		args_array = args_to_array(cmd->args);  // ← Utilisez la nouvelle fonction
 		if (!args_array)
 		{
 			cleanup_child(shell);
@@ -95,6 +70,7 @@ void	child_process(t_command *cmd, t_shell *shell, int prev[2], int curr[2])
 		exit(126);
 	}
 }
+
 
 static void	update_exit_status(t_shell *shell, int last_status, int sig_int,
 		int sig_quit)
