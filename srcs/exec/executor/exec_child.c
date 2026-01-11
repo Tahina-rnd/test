@@ -6,7 +6,7 @@
 /*   By: tarandri <tarandri@student.42antananarivo. +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/08 20:13:41 by miokrako          #+#    #+#             */
-/*   Updated: 2026/01/10 22:52:31 by tarandri         ###   ########.fr       */
+/*   Updated: 2026/01/11 10:43:13 by tarandri         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,32 +33,34 @@ static void	setup_pipes(t_command *cmd, int prev_pipe[2], int curr_pipe[2])
 	}
 }
 
-// CORRECTION ICI : Parcours de liste chainee
+/*
+** CORRECTION ICI : Conversion Liste -> Tableau
+*/
 static char	**convert_args_to_array(t_arg *args)
 {
 	char	**result;
 	int		count;
 	int		i;
-	t_arg	*tmp;
+	t_arg	*curr;
 
 	if (!args)
 		return (NULL);
 	count = 0;
-	tmp = args;
-	while (tmp)
+	curr = args;
+	while (curr)
 	{
 		count++;
-		tmp = tmp->next;
+		curr = curr->next;
 	}
 	result = (char **)malloc(sizeof(char *) * (count + 1));
 	if (!result)
 		return (NULL);
 	i = 0;
-	tmp = args;
+	curr = args;
 	while (i < count)
 	{
-		result[i] = tmp->value;
-		tmp = tmp->next;
+		result[i] = curr->value;
+		curr = curr->next;
 		i++;
 	}
 	result[i] = NULL;
@@ -77,12 +79,14 @@ void	child_process(t_command *cmd, t_shell *shell, int prev[2], int curr[2])
 		cleanup_child(shell);
 		exit(1);
 	}
-	// CORRECTION: cmd->args est un pointeur, cmd->args->value est le premier arg
+	
+	// Correction accès : cmd->args->value au lieu de [0].value
 	if (!cmd->args || !cmd->args->value)
 	{
 		cleanup_child(shell);
 		exit(0);
 	}
+	
 	if (is_builtin(cmd->args->value))
 	{
 		ret = execute_builtin(cmd, shell);
@@ -104,7 +108,20 @@ void	child_process(t_command *cmd, t_shell *shell, int prev[2], int curr[2])
 	}
 }
 
-// ... (Gardez wait_all_children tel quel)
+// ... (wait_all_children inchangé) ...
+static void	update_exit_status(t_shell *shell, int last_status, int sig_int,
+		int sig_quit)
+{
+	if (WIFEXITED(last_status))
+		shell->last_exit_status = WEXITSTATUS(last_status);
+	else if (WIFSIGNALED(last_status))
+		shell->last_exit_status = 128 + WTERMSIG(last_status);
+	if (sig_int)
+		write(1, "\n", 1);
+	else if (sig_quit)
+		ft_putstr_fd("Quit (core dumped)\n", 2);
+}
+
 void	wait_all_children(pid_t last_pid, t_shell *shell)
 {
 	pid_t	wpid;
@@ -133,12 +150,5 @@ void	wait_all_children(pid_t last_pid, t_shell *shell)
 			last_status = status;
 	}
 	setup_prompt_signal();
-	if (WIFEXITED(last_status))
-		shell->last_exit_status = WEXITSTATUS(last_status);
-	else if (WIFSIGNALED(last_status))
-		shell->last_exit_status = 128 + WTERMSIG(last_status);
-	if (sig[0])
-		write(1, "\n", 1);
-	else if (sig[1])
-		ft_putstr_fd("Quit (core dumped)\n", 2);
+	update_exit_status(shell, last_status, sig[0], sig[1]);
 }

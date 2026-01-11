@@ -6,11 +6,13 @@
 /*   By: tarandri <tarandri@student.42antananarivo. +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/08 20:32:05 by miokrako          #+#    #+#             */
-/*   Updated: 2026/01/10 22:53:55 by tarandri         ###   ########.fr       */
+/*   Updated: 2026/01/11 10:43:39 by tarandri         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../../../includes/exec.h"
+
+// ... (try_paths et get_path inchangés sauf petit fix) ...
 
 static char	*try_paths(char **paths, char *cmd)
 {
@@ -54,13 +56,15 @@ char	*get_path(t_env *env, char *cmd)
 	if (!path_var)
 		return (NULL);
 	paths = ft_split(path_var, ':');
+	free(path_var); // IMPORTANT: get_env_value retourne un strdup, il faut le free
 	if (!paths)
 		return (NULL);
 	result = try_paths(paths, cmd);
 	free_tab(paths);
-	free(path_var); // IMPORTANT: get_env_value retourne un strdup, il faut free
 	return (result);
 }
+
+// ... (handle_exec_error et check_special_cases inchangés) ...
 
 static void	handle_exec_error(char *cmd, char *path)
 {
@@ -98,40 +102,49 @@ static void	check_special_cases(char *cmd)
 	}
 }
 
+/*
+** CORRECTION ICI : Conversion Liste -> Tableau pour exec_simple_cmd
+*/
 void	exec_simple_cmd(t_command *cmd, t_env *env)
 {
 	char	*path;
 	char	**env_tab;
 	char	**sh_args;
 	char	**args_array;
+	t_arg	*curr;
 	int		i;
-	t_arg	*tmp;
 
+	// Correction accès
 	if (!cmd || !cmd->args || !cmd->args->value)
 		exit(0);
 	check_special_cases(cmd->args->value);
 
-	// Convert t_arg LIST to char** array
+	// 1. Compter (Liste)
 	i = 0;
-	tmp = cmd->args;
-	while (tmp)
+	curr = cmd->args;
+	while (curr)
 	{
 		i++;
-		tmp = tmp->next;
+		curr = curr->next;
 	}
+
+	// 2. Allouer
 	args_array = (char **)malloc(sizeof(char *) * (i + 1));
 	if (!args_array)
 		exit(1);
+
+	// 3. Remplir
 	i = 0;
-	tmp = cmd->args;
-	while (tmp)
+	curr = cmd->args;
+	while (curr)
 	{
-		args_array[i] = tmp->value;
-		tmp = tmp->next;
+		args_array[i] = curr->value;
+		curr = curr->next;
 		i++;
 	}
 	args_array[i] = NULL;
 
+	// Utiliser la bonne valeur pour le path (cmd->args->value)
 	path = get_path(env, cmd->args->value);
 	if (!path)
 	{
@@ -162,13 +175,14 @@ void	exec_simple_cmd(t_command *cmd, t_env *env)
 	exit(126);
 }
 
+// ... (exec_simple_cmd_with_array inchangé) ...
 void	exec_simple_cmd_with_array(t_command *cmd, t_env *env, char **args_array)
 {
 	char	*path;
 	char	**env_tab;
 	char	**sh_args;
 
-	(void)cmd; // cmd n'est pas utilisé directement ici
+	(void)cmd;
 	if (!args_array || !args_array[0])
 		exit(0);
 	check_special_cases(args_array[0]);

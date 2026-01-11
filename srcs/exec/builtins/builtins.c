@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   builtins.c                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: miokrako <miokrako@student.42antananari    +#+  +:+       +#+        */
+/*   By: tarandri <tarandri@student.42antananarivo. +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/17 21:32:09 by miokrako          #+#    #+#             */
-/*   Updated: 2026/01/09 12:11:15 by miokrako         ###   ########.fr       */
+/*   Updated: 2026/01/11 10:42:37 by tarandri         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -51,30 +51,47 @@ int	is_builtin(char *cmd)
 	return (0);
 }
 
-// Helper function to convert t_arg array to char** array
+/*
+** CORRECTION MAJEURE ICI : Itération sur la LISTE chaînée
+*/
 static char	**convert_args_for_builtins(t_arg *args)
 {
 	char	**result;
 	int		count;
 	int		i;
+	t_arg	*curr;
 
 	if (!args)
 		return (NULL);
+	
+	// 1. Compter les arguments en parcourant la liste
 	count = 0;
-	while (args[count].value)
+	curr = args;
+	while (curr)
+	{
 		count++;
+		curr = curr->next;
+	}
+
+	// 2. Allouer le tableau
 	result = (char **)malloc(sizeof(char *) * (count + 1));
 	if (!result)
 		return (NULL);
+
+	// 3. Remplir le tableau en parcourant la liste
 	i = 0;
+	curr = args;
 	while (i < count)
 	{
-		result[i] = args[i].value;
+		result[i] = curr->value;
+		curr = curr->next;
 		i++;
 	}
 	result[i] = NULL;
 	return (result);
 }
+
+// ... (Le reste du fichier reste inchangé) ...
 
 static int	execute_builtin_part1(t_shell *shell, char **args_array)
 {
@@ -105,7 +122,8 @@ int	execute_builtin(t_command *cmd, t_shell *shell)
 	int		result;
 	char	**args_array;
 
-	if (!cmd || !cmd->args || !cmd->args[0].value)
+	// Correction accès : cmd->args->value au lieu de cmd->args[0].value
+	if (!cmd || !cmd->args || !cmd->args->value)
 		return (1);
 
 	args_array = convert_args_for_builtins(cmd->args);

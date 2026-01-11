@@ -6,7 +6,7 @@
 /*   By: tarandri <tarandri@student.42antananarivo. +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/26 07:44:36 by tarandri          #+#    #+#             */
-/*   Updated: 2026/01/10 22:05:03 by tarandri         ###   ########.fr       */
+/*   Updated: 2026/01/11 11:16:30 by tarandri         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -47,37 +47,47 @@ static int	expand_redir_file(t_redir *redir, t_shell *shell)
 {
 	char	*expanded;
 
-	// Note: Ici on simplifie. Dans le vrai minishell, il faudrait utiliser
-	// la même logique de segments que pour les args pour être parfait.
-	// Mais pour l'instant, faisons simple :
-	
-	// Si le fichier contient un $, on l'étend
+	// Si le fichier contient un $
 	if (ft_strchr(redir->file, '$'))
 	{
 		expanded = expand_text(redir->file, shell);
-		if (!expanded || ft_strlen(expanded) == 0)
+		
+		// Vérifie si vide OU si contient des espaces (ambiguous redirect)
+		// Note: Pour être parfait (gérer "$VAR" avec espaces), il faudrait les segments.
+		// Mais ici on fait le check basique.
+		if (!expanded || ft_strlen(expanded) == 0 || ft_strchr(expanded, ' '))
 		{
-			// C'est ICI qu'on détecte l'Ambiguous Redirect
 			printf("Minishell: %s: ambiguous redirect\n", redir->file);
-			if (expanded) free(expanded);
-			return (0); // Erreur
+			if (expanded)
+				free(expanded);
+			
+			// === CORRECTION DOUBLE FREE ===
+			free(redir->file); 
+			redir->file = NULL; // Indispensable pour éviter le double free plus tard
+			// ==============================
+			
+			return (0);
 		}
 		free(redir->file);
 		redir->file = expanded;
 	}
-	return (1); // Succès
+	return (1);
 }
 
 static int	process_redirs(t_redir *lst, t_shell *shell)
 {
+	int	status;
+
+	status = 1;
 	while (lst)
 	{
-		// On n'étend pas les heredocs (sauf si on gère les quotes heredoc, bonus)
+		// On continue même si erreur pour traiter tous les fichiers,
+		// mais on retiendra l'échec (0)
 		if (!expand_redir_file(lst, shell))
-			return (0);
+			status = 0;
 		lst = lst->next;
 	}
-	return (1);
+	return (status);
 }
 
 void	expander(t_shell *shell, t_command *cmd)
@@ -88,7 +98,6 @@ void	expander(t_shell *shell, t_command *cmd)
 	curr_cmd = cmd;
 	while (curr_cmd)
 	{
-		// 1. Expansion des arguments (ls $USER)
 		curr_arg = curr_cmd->args;
 		while (curr_arg)
 		{
@@ -96,13 +105,12 @@ void	expander(t_shell *shell, t_command *cmd)
 			curr_arg = curr_arg->next;
 		}
 
-		// 2. Expansion des redirections (echo a > $FICHIER)
-		// Si ambiguous redirect, on peut choisir de marquer la commande comme invalide
+		// Si ambiguous redirect détecté (retour 0), on met le status à 1.
+		// Grâce à la correction, redir->file est NULL, donc l'executor 
+		// échouera proprement sans créer de fichier.
 		if (!process_redirs(curr_cmd->input_redirection, shell)
 			|| !process_redirs(curr_cmd->output_redirection, shell))
 		{
-			// Astuce : On peut mettre une commande vide ou un flag d'erreur
-			// pour que l'executor ne l'exécute pas.
 			shell->last_exit_status = 1;
 		}
 		
