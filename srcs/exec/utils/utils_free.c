@@ -6,7 +6,7 @@
 /*   By: tarandri <tarandri@student.42antananarivo. +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/26 13:28:19 by miokrako          #+#    #+#             */
-/*   Updated: 2026/01/10 23:04:11 by tarandri         ###   ########.fr       */
+/*   Updated: 2026/01/11 10:31:28 by tarandri         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,6 +24,19 @@ void	free_env(t_env *env)
 		free(env);
 		env = tmp;
 	}
+}
+
+void free_redirections(t_redir *redir)
+{
+    t_redir *tmp;
+    while (redir)
+    {
+        tmp = redir;
+        redir = redir->next;
+        if (tmp->file)
+            free(tmp->file);
+        free(tmp);
+    }
 }
 
 void	free_command(t_command *cmd)
@@ -56,17 +69,17 @@ void	free_command(t_command *cmd)
 	free(cmd);
 }
 
-void	free_commands(t_command *commands)
-{
-	t_command	*tmp;
+// void	free_commands(t_command *commands)
+// {
+// 	t_command	*tmp;
 
-	while (commands)
-	{
-		tmp = commands->next;
-		free_command(commands);
-		commands = tmp;
-	}
-}
+// 	while (commands)
+// 	{
+// 		tmp = commands->next;
+// 		free_command(commands);
+// 		commands = tmp;
+// 	}
+// }
 
 void	cleanup_shell(t_shell *shell)
 {

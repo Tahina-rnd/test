@@ -6,7 +6,7 @@
 /*   By: tarandri <tarandri@student.42antananarivo. +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/26 10:39:18 by tarandri          #+#    #+#             */
-/*   Updated: 2026/01/10 22:31:02 by tarandri         ###   ########.fr       */
+/*   Updated: 2026/01/11 10:26:07 by tarandri         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,16 +38,16 @@ char	*ft_strjoin_free(char *s1, char *s2)
 ** Nouvelle signature demandée : (t_env *env, char *key)
 ** Elle cherche uniquement dans la liste et renvoie une COPIE.
 */
-char	*get_env_value(t_env *env, char *key)
-{
-	t_env	*tmp;
+// char	*get_env_value(t_env *env, char *key)
+// {
+// 	t_env	*tmp;
 
-	tmp = env;
-	while (tmp)
-	{
-		if (ft_strcmp(key, tmp->key) == 0)
-			return (ft_strdup(tmp->value));
-		tmp = tmp->next;
-	}
-	return (ft_strdup(""));
-}
+// 	tmp = env;
+// 	while (tmp)
+// 	{
+// 		if (ft_strcmp(key, tmp->key) == 0)
+// 			return (ft_strdup(tmp->value));
+// 		tmp = tmp->next;
+// 	}
+// 	return (ft_strdup(""));
+// }

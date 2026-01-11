@@ -6,7 +6,7 @@
 /*   By: tarandri <tarandri@student.42antananarivo. +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/18 21:22:34 by tarandri          #+#    #+#             */
-/*   Updated: 2026/01/10 22:32:22 by tarandri         ###   ########.fr       */
+/*   Updated: 2026/01/11 10:24:43 by tarandri         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,7 +21,7 @@ char		*ft_strndup(const char *s, size_t n);
 void		ft_error(char *str);
 
 // ENV
-char		*env_get_value(t_env *env_list, char *key);
+char		*get_env_value(t_env *env_list, char *key);
 void		free_env_list(t_env *env_list);
 t_env		*create_env_node(const char *key, const char *value);
 void		add_env_node_back(t_env **head, t_env *new_node);
@@ -53,7 +53,6 @@ int			parse_redir(t_command *cmd, t_token **curr_token);
 // EXPANDER
 void	expander(t_shell *shell, t_command *cmd);
 char	*ft_strjoin_free(char *s1, char *s2);
-char	*get_env_value(t_env *env, char *key);
 char	*expand_text(char *str, t_shell *shell);
 
 #endif

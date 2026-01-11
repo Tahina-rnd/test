@@ -6,7 +6,7 @@
 /*   By: tarandri <tarandri@student.42antananarivo. +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/24 11:01:22 by miokrako          #+#    #+#             */
-/*   Updated: 2026/01/10 21:52:34 by tarandri         ###   ########.fr       */
+/*   Updated: 2026/01/11 10:29:34 by tarandri         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -67,7 +67,7 @@ void	free_tab(char **tab);
 void	free_tab_partial(char **tab, int count);
 void	free_env(t_env *env);
 // void	free_command(t_command *cmd);
-void	free_commands(t_command *commands);
+// void	free_commands(t_command *commands);
 void	cleanup_shell(t_shell *shell);
 void	cleanup_child(t_shell *shell);
 

@@ -6,7 +6,7 @@
 /*   By: tarandri <tarandri@student.42antananarivo. +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/25 12:04:59 by tarandri          #+#    #+#             */
-/*   Updated: 2026/01/02 09:47:42 by tarandri         ###   ########.fr       */
+/*   Updated: 2026/01/11 10:24:19 by tarandri         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,7 +14,7 @@
 
 // Utils : Fonction get_env_value(key) (ex: chercher "HOME" -> renvoie "/usr/bin/home")
 
-char	*env_get_value(t_env *env_list, char *key)
+char	*get_env_value(t_env *env_list, char *key)
 {
 	t_env	*current;
 
