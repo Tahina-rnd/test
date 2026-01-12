@@ -6,7 +6,7 @@
 /*   By: tarandri <tarandri@student.42antananarivo. +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/18 21:22:34 by tarandri          #+#    #+#             */
-/*   Updated: 2026/01/11 14:10:17 by tarandri         ###   ########.fr       */
+/*   Updated: 2026/01/12 07:17:28 by tarandri         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -48,7 +48,7 @@ t_command	*create_command(void);
 void		cmd_add_back(t_command **lst, t_command *new);
 int			add_arg(t_command *cmd, t_token *token);
 void		free_commands(t_command *cmds);
-
+void		free_segments(t_segment *seg);
 int			parse_redir(t_command *cmd, t_token **curr_token);
 
 // EXPANDER

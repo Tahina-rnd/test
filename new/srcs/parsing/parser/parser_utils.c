@@ -6,11 +6,25 @@
 /*   By: tarandri <tarandri@student.42antananarivo. +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/29 14:57:18 by tarandri          #+#    #+#             */
-/*   Updated: 2026/01/10 21:41:48 by tarandri         ###   ########.fr       */
+/*   Updated: 2026/01/12 07:20:47 by tarandri         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../../../includes/parsing.h"
+
+void	free_segments(t_segment *seg)
+{
+	t_segment	*tmp;
+
+	while (seg)
+	{
+		tmp = seg;
+		seg = seg->next;
+		if (tmp->value)
+			free(tmp->value);
+		free(tmp);
+	}
+}
 
 t_command	*create_command(void)
 {
@@ -86,10 +100,6 @@ static void	free_redirs(t_redir *lst)
 	}
 }
 
-/*
-** Fonction helper pour nettoyer la liste des arguments 
-** (Maintenant possible car t_arg a un next !)
-*/
 static void	free_args(t_arg *lst)
 {
 	t_arg	*temp;
@@ -100,6 +110,8 @@ static void	free_args(t_arg *lst)
 		lst = lst->next;
 		if (temp->value)
 			free(temp->value);
+		if (temp->segments)
+			free_segments(temp->segments);
 		free(temp);
 	}
 }

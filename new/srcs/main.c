@@ -109,6 +109,7 @@ static void	minishell_loop(t_shell *shell)
 			if (is_exit_command(shell->input))
 			{
 				free(shell->input);
+				shell->input = NULL;
 				break ;
 			}
 			process_input(shell);

@@ -6,25 +6,11 @@
 /*   By: tarandri <tarandri@student.42antananarivo. +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/26 07:44:36 by tarandri          #+#    #+#             */
-/*   Updated: 2026/01/12 06:32:56 by tarandri         ###   ########.fr       */
+/*   Updated: 2026/01/12 07:16:51 by tarandri         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../../../includes/parsing.h"
-
-static void	free_segments(t_segment *seg)
-{
-	t_segment	*tmp;
-
-	while (seg)
-	{
-		tmp = seg;
-		seg = seg->next;
-		if (tmp->value)
-			free(tmp->value);
-		free(tmp);
-	}
-}
 
 static t_arg	*new_arg_node(void)
 {

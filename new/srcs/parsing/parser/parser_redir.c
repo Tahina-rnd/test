@@ -6,7 +6,7 @@
 /*   By: tarandri <tarandri@student.42antananarivo. +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/29 14:31:40 by tarandri          #+#    #+#             */
-/*   Updated: 2026/01/11 14:59:02 by tarandri         ###   ########.fr       */
+/*   Updated: 2026/01/12 07:12:07 by tarandri         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,9 +19,6 @@ static t_redir	*create_redir_node(t_token *file_token, int type)
 	node = malloc(sizeof(t_redir));
 	if (!node)
 		return (NULL);
-	
-	// ✅ Pour heredoc, on garde le literal BRUT (avec quotes éventuelles)
-	// L'expansion se fera dans heredoc.c selon les règles bash
 	node->file = ft_strdup(file_token->literal);
 	node->fd = -1;
 	node->append_mode = 0;
@@ -72,7 +69,7 @@ int	parse_redir(t_command *cmd, t_token **curr_token)
 	if (!file || file->type != WORD)
 	{
 		ft_putstr_fd("Minishell: syntax error near unexpected token `", 2);
-		if (!file)
+		if (!file || !file->literal) 
 			ft_putstr_fd("newline", 2);
 		else
 			ft_putstr_fd(file->literal, 2);
