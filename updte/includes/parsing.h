@@ -6,7 +6,7 @@
 /*   By: tarandri <tarandri@student.42antananarivo. +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/18 21:22:34 by tarandri          #+#    #+#             */
-/*   Updated: 2026/01/12 07:17:28 by tarandri         ###   ########.fr       */
+/*   Updated: 2026/01/12 07:58:57 by tarandri         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,8 +26,6 @@ void		free_env_list(t_env *env_list);
 t_env		*create_env_node(const char *key, const char *value);
 void		add_env_node_back(t_env **head, t_env *new_node);
 t_env		*dup_env(char **envp);
-char		**env_to_array(t_env *env);
-void		free_env_array(char **env_array);
 
 // LEXER
 t_token		*lexer(char *input);
@@ -57,7 +55,6 @@ char		*ft_strjoin_free(char *s1, char *s2);
 char		*expand_text(char *str, t_shell *shell);
 
 // other
-int			count_env_nodes(t_env *env);
 void		free_command(t_command *cmd);
 
 #endif

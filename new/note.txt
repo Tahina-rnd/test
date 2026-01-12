@@ -1,6 +1,0 @@
-1-	unset PATH
-	minishell$> ls
-	minishell: ls: command not found
-	bash: ls: No such file or directory
-
-2-	

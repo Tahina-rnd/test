@@ -6,12 +6,26 @@
 /*   By: tarandri <tarandri@student.42antananarivo. +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/24 10:49:05 by miokrako          #+#    #+#             */
-/*   Updated: 2026/01/11 13:47:31 by tarandri         ###   ########.fr       */
+/*   Updated: 2026/01/12 07:58:53 by tarandri         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../../../includes/exec.h"
 
+static int	count_env_nodes(t_env *env)
+{
+	int		count;
+	t_env	*current;
+
+	count = 0;
+	current = env;
+	while (current)
+	{
+		count++;
+		current = current->next;
+	}
+	return (count);
+}
 t_env	*new_env_node(char *str)
 {
 	t_env	*node;

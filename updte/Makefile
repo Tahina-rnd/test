@@ -5,7 +5,8 @@ LIBFT_DIR   = ./libft
 LIBFT       = $(LIBFT_DIR)/libft.a
 INCLUDES    = -I./includes -I. -I$(LIBFT_DIR)
 
-SRCS_MAIN   = srcs/main.c
+SRCS_MAIN   = srcs/main.c \
+              srcs/main_utils.c
 
 # Parsing Sources
 SRCS_PARSING = srcs/parsing/lexer/lexer.c \
@@ -24,8 +25,7 @@ SRCS_PARSING = srcs/parsing/lexer/lexer.c \
 
 # Env Sources (On retire env_to_array.c car utils_env.c gere deja ca)
 SRCS_ENV     = srcs/parsing/env/env_dup_utils.c \
-              srcs/parsing/env/env_duplicate.c \
-              srcs/parsing/env/env_to_array.c
+              srcs/parsing/env/env_duplicate.c
 
 # Exec Sources
 SRCS_EXEC    = srcs/exec/executor/exec.c \
