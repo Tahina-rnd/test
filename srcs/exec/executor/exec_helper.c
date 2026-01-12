@@ -1,0 +1,121 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   exec_helper.c                                      :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: miokrako <miokrako@student.42antananari    +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/01/12 08:12:02 by miokrako          #+#    #+#             */
+/*   Updated: 2026/01/12 11:31:21 by miokrako         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
+#include "../../../includes/exec.h"
+
+// char	**convert_args_to_array(t_arg *args)
+// {
+// 	char	**result;
+// 	int		count;
+// 	int		i;
+// 	t_arg	*current;
+
+// 	if (!args)
+// 		return (NULL);
+// 	count = 0;
+// 	current = args;
+// 	while (current)
+// 	{
+// 		count++;
+// 		current = current->next;
+// 	}
+// 	result = (char **)malloc(sizeof(char *) * (count + 1));
+// 	if (!result)
+// 		return (NULL);
+// 	i = 0;
+// 	current = args;
+// 	while (current)
+// 	{
+// 		result[i] = current->value;
+// 		current = current->next;
+// 		i++;
+// 	}
+// 	result[i] = NULL;
+// 	return (result);
+// }
+
+void	update_exit_status(t_shell *shell, int last_status, int sig_int,
+		int sig_quit)
+{
+	if (WIFEXITED(last_status))
+		shell->last_exit_status = WEXITSTATUS(last_status);
+	else if (WIFSIGNALED(last_status))
+		shell->last_exit_status = 128 + WTERMSIG(last_status);
+	if (sig_int)
+		write(1, "\n", 1);
+	else if (sig_quit)
+		ft_putstr_fd("Quit (core dumped)\n", 2);
+}
+
+void	setup_pipes(t_command *cmd, int prev_pipe[2], int curr_pipe[2])
+{
+	if (prev_pipe[0] != -1)
+	{
+		dup2(prev_pipe[0], STDIN_FILENO);
+		close(prev_pipe[0]);
+		if (prev_pipe[1] != -1)
+			close(prev_pipe[1]);
+	}
+	if (cmd->next)
+	{
+		if (curr_pipe[0] != -1)
+			close(curr_pipe[0]);
+		if (curr_pipe[1] != -1)
+		{
+			dup2(curr_pipe[1], STDOUT_FILENO);
+			close(curr_pipe[1]);
+		}
+	}
+}
+
+char	*get_path(t_env *env, char *cmd)
+{
+	char	*path_var;
+	char	**paths;
+	char	*result;
+
+	if (cmd[0] == '\0')
+		return (NULL);
+	if (ft_strchr(cmd, '/'))
+	{
+		if (access(cmd, F_OK) == -1)
+			return (NULL);
+		return (ft_strdup(cmd));
+	}
+	path_var = get_env_value(env, "PATH");
+	if (!path_var)
+		return (NULL);
+	paths = ft_split(path_var, ':');
+	if (!paths)
+		return (NULL);
+	result = try_paths(paths, cmd);
+	free_tab(paths);
+	return (result);
+}
+
+void	check_special_cases(char *cmd, t_shell *shell, char **args_array)
+{
+	if (ft_strcmp(cmd, ".") == 0)
+	{
+		ft_putstr_fd("minishell: .: filename argument required\n", 2);
+		free(args_array);
+		cleanup_child(shell);
+		exit(2);
+	}
+	if (ft_strcmp(cmd, "..") == 0)
+	{
+		ft_putstr_fd("minishell: ..: command not found\n", 2);
+		free(args_array);
+		cleanup_child(shell);
+		exit(127);
+	}
+}

@@ -1,40 +1,50 @@
-7- message d'erreur structure error : bash: export: `12invalid=value': not a valid identifier
+1 - VITA
+minishell$> export val1 1val val2
+export: `1val': not a valid identifier
+minishell$> echo $?
+0
+Au lieu de 1
 
-mitovy - error message bash-5.1$ echo >
-bash: syntax error near unexpected token `newline'
+bash:
+miokrako@c1r5s4:~/Music/Minishell12$ export val1 1val val2
+bash: export: `1val': not a valid identifier
+miokrako@c1r5s4:~/Music/Minishell12$ echo $?
+1
 
-~/Downloads/minishell$  << m > | << l > l
-mitovy bash: syntax error near unexpected token `|'
-> m
-
-13 - echo 'test => deux messages d'erreur
-minishell: syntax error: unclosed quote
-minishell: syntax error near unexpected token `unclosed quote'
-
-7 -
-bash-5.1$ ls << EOF >
-> EOF
-bash: syntax error near unexpected token `newline'
-minishell> cat << EOF >
-minishell: syntax error near unexpected token `>'
-minishell>
+2 -
+minishell$> > 1 > 2
+minishell$> ls
+1  includes  libft  Makefile  minishell  notes  rl.supp  srcs  t1.sh
+minishell$>
 
 
-cd maina
-------------------------------------
+bash-5.1$ > 1 > 2
+bash-5.1$ ls
+1  2  includes  libft  Makefile  minishell  notes  rl.supp  srcs  t1.sh
+bash-5.1$
 
-ls > $tsymety
-minishell: $tsymety: ambiguous redirect et creer le fichier
-minishell> > 1 > 2 ( tsy mandeha)
-minishell> < rine ( tsy mandeha)
+3 - VITA
+minishell$> ^C
+minishell$> ^C
+minishell$> echo $?
+0
+minishell$>
 
+bash:
+miokrako@c1r5s4:~/Music/Minishell12$ ^C
+miokrako@c1r5s4:~/Music/Minishell12$ echo $?
+130
 
-au lancement : ./minishell                                                                                                                                         [15:00:17]
-minishell> cd
-minishell: cd: too many arguments
-minishell> cd
+4- VITA
+minishell$> env
+PWD=/home/miokrako/Music/Minishell12
+minishell$>
 
-update lexer >>> difference entre "" et '', si $ dans "" 
-
-minishell> > 1 > 2
+bash:
+c1r5s4% env -i bash
+miokrako@c1r5s4:/home/miokrako/Music/Minishell12$ env
+PWD=/home/miokrako/Music/Minishell12
+SHLVL=1
+_=/usr/bin/env
+miokrako@c1r5s4:/home/miokrako/Music/Minishell12$
 
