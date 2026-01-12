@@ -6,7 +6,7 @@
 /*   By: tarandri <tarandri@student.42antananarivo. +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/29 14:31:40 by tarandri          #+#    #+#             */
-/*   Updated: 2026/01/12 07:12:07 by tarandri         ###   ########.fr       */
+/*   Updated: 2026/01/12 08:56:10 by tarandri         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -45,17 +45,6 @@ static void	redir_add_back(t_redir **lst, t_redir *new)
 	temp->next = new;
 }
 
-/**
- * Parse une redirection (< > << >>)
- * 
- * IMPORTANT : Cette fonction AVANCE **curr_token de 1 position
- * Le token pointé devient le fichier/délimiteur
- * 
- * Avant : *curr_token pointe sur '<'
- * Après  : *curr_token pointe sur 'file.txt'
- * 
- * Le parser principal doit faire tokens = tokens->next après l'appel
- */
 int	parse_redir(t_command *cmd, t_token **curr_token)
 {
 	t_token	*op;
@@ -64,8 +53,6 @@ int	parse_redir(t_command *cmd, t_token **curr_token)
 
 	op = *curr_token;
 	file = op->next;
-	
-	// Vérification d'erreur de syntaxe
 	if (!file || file->type != WORD)
 	{
 		ft_putstr_fd("Minishell: syntax error near unexpected token `", 2);
@@ -76,23 +63,15 @@ int	parse_redir(t_command *cmd, t_token **curr_token)
 		ft_putstr_fd("'\n", 2);
 		return (0);
 	}
-	
-	// Création du nœud de redirection
 	new_redir = create_redir_node(file, op->type);
 	if (!new_redir)
 		return (0);
-	
-	// Distribution selon le type
 	if (op->type == REDIRECT_IN)
 		redir_add_back(&(cmd->input_redirection), new_redir);
 	else if (op->type == HEREDOC)
 		redir_add_back(&(cmd->heredoc), new_redir);
-	else // REDIRECT_OUT ou APPEND
-		redir_add_back(&(cmd->output_redirection), new_redir);
-	
-	// ✅ CRITIQUE : Avance curr_token sur le fichier
-	// Cela empêche le fichier d'être ajouté aux arguments
-	*curr_token = file;
-	
+	else
+		redir_add_back(&(cmd->output_redirection), new_redir);	
+	*curr_token = file;	
 	return (1);
 }

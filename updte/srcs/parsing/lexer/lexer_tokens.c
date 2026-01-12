@@ -6,7 +6,7 @@
 /*   By: tarandri <tarandri@student.42antananarivo. +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/18 21:19:16 by tarandri          #+#    #+#             */
-/*   Updated: 2026/01/10 21:37:16 by tarandri         ###   ########.fr       */
+/*   Updated: 2026/01/12 08:55:22 by tarandri         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -57,9 +57,6 @@ t_token	*handle_operator(char *input, int *i)
 	return (create_token(type, literal));
 }
 
-/*
-** CORRECTION ICI : On capture la string complète pour le literal
-*/
 t_token	*handle_word(char *input, int *i)
 {
 	t_token	*token;
@@ -77,7 +74,6 @@ t_token	*handle_word(char *input, int *i)
 			return (NULL);
 		}
 	}
-	// On extrait la chaîne brute complète (avec quotes) pour le literal
 	token->literal = ft_substr(input, start, *i - start);
 	return (token);
 }

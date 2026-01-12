@@ -6,7 +6,7 @@
 /*   By: tarandri <tarandri@student.42antananarivo. +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/18 21:22:34 by tarandri          #+#    #+#             */
-/*   Updated: 2026/01/12 07:58:57 by tarandri         ###   ########.fr       */
+/*   Updated: 2026/01/12 09:14:42 by tarandri         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -53,6 +53,11 @@ int			parse_redir(t_command *cmd, t_token **curr_token);
 void		expander(t_shell *shell, t_command *cmd);
 char		*ft_strjoin_free(char *s1, char *s2);
 char		*expand_text(char *str, t_shell *shell);
+t_arg		*expand_arg_to_list(t_arg *arg, t_shell *shell);
+int			process_redirs(t_redir *lst, t_shell *shell);
+t_arg		*new_arg_node(void);
+void		append_val(t_arg *arg, char *str);
+
 
 // other
 void		free_command(t_command *cmd);

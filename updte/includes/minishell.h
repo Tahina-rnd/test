@@ -6,7 +6,7 @@
 /*   By: tarandri <tarandri@student.42antananarivo. +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/18 20:22:34 by tarandri          #+#    #+#             */
-/*   Updated: 2026/01/12 07:45:04 by tarandri         ###   ########.fr       */
+/*   Updated: 2026/01/12 08:39:05 by tarandri         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -105,7 +105,6 @@ typedef struct s_shell
 	t_command	*commands;
 	int			last_exit_status;
 }	t_shell;
-
 
 void    init_shell(t_shell *shell, char **envp);
 void    reset_loop(t_shell *shell);

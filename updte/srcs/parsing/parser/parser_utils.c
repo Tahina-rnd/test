@@ -6,7 +6,7 @@
 /*   By: tarandri <tarandri@student.42antananarivo. +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/29 14:57:18 by tarandri          #+#    #+#             */
-/*   Updated: 2026/01/12 07:20:47 by tarandri         ###   ########.fr       */
+/*   Updated: 2026/01/12 08:56:17 by tarandri         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -58,8 +58,6 @@ void	cmd_add_back(t_command **lst, t_command *new)
 	temp->next = new;
 }
 
-/* ** Crée un node t_arg et l'ajoute à la fin de la liste cmd->args
-*/
 int	add_arg(t_command *cmd, t_token *token)
 {
 	t_arg	*new_arg;

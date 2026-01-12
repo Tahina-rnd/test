@@ -6,7 +6,7 @@
 /*   By: tarandri <tarandri@student.42antananarivo. +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/26 10:39:50 by tarandri          #+#    #+#             */
-/*   Updated: 2026/01/11 14:41:27 by tarandri         ###   ########.fr       */
+/*   Updated: 2026/01/12 08:43:13 by tarandri         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,10 +24,6 @@ static int	get_var_len(char *str)
 	return (i);
 }
 
-/*
-** Helper pour récupérer la valeur (gère le $? ou appelle get_env_value)
-** IMPORTANT : Retourne toujours une COPIE allouée (à libérer par l'appelant)
-*/
 static char	*fetch_value(char *key, t_shell *shell)
 {
 	char	*value;
@@ -36,8 +32,8 @@ static char	*fetch_value(char *key, t_shell *shell)
 		return (ft_itoa(shell->last_exit_status));
 	value = get_env_value(shell->env, key);
 	if (!value)
-		return (ft_strdup(""));  // Variable inexistante → chaîne vide
-	return (ft_strdup(value));   // Duplique la valeur
+		return (ft_strdup(""));
+	return (ft_strdup(value));
 }
 
 static char	*append_var(char *res, char *str, int *i, t_shell *shell)
@@ -54,17 +50,13 @@ static char	*append_var(char *res, char *str, int *i, t_shell *shell)
 	
 	key = ft_substr(str, *i, len);
 	if (!key)
-		return (res);
-	
-	val = fetch_value(key, shell);  // val est toujours alloué
-	free(key);
-	
+		return (res);	
+	val = fetch_value(key, shell);
+	free(key);	
 	if (!val)
-		val = ft_strdup("");  // Sécurité supplémentaire
-	
+		val = ft_strdup("");	
 	new_res = ft_strjoin_free(res, val);
-	free(val);  // ← IMPORTANT : libérer val car fetch_value alloue
-	
+	free(val);	
 	*i += len;
 	return (new_res);
 }
@@ -88,12 +80,11 @@ char	*expand_text(char *str, t_shell *shell)
 	
 	res = ft_strdup("");
 	if (!res)
-		return (NULL);
-	
+		return (NULL);	
 	i = 0;
 	while (str[i])
 	{
-		if (str[i] == '$' && str[i + 1])  // ← Vérifiez qu'il y a un char après $
+		if (str[i] == '$' && str[i + 1])
 			res = append_var(res, str, &i, shell);
 		else
 		{

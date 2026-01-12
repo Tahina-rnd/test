@@ -6,7 +6,7 @@
 /*   By: tarandri <tarandri@student.42antananarivo. +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/24 14:28:37 by tarandri          #+#    #+#             */
-/*   Updated: 2026/01/02 09:39:44 by tarandri         ###   ########.fr       */
+/*   Updated: 2026/01/12 08:41:38 by tarandri         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,7 +36,7 @@ t_env	*create_env_node(const char *key, const char *value)
 		}
 	}
 	else
-		new_node->value = NULL;	
+		new_node->value = NULL;
 	new_node->next = NULL;
 	return (new_node);
 }
@@ -58,49 +58,51 @@ void	add_env_node_back(t_env **head, t_env *new_node)
 	current->next = new_node;
 }
 
-t_env	*dup_env(char **envp)
+static t_env	*extract_env_node(char *str)
 {
-	t_env	*env_list;
-	int		i;
 	int		j;
 	char	*key;
 	char	*value;
-	t_env	*new_node;
+	t_env	*node;
+
+	j = 0;
+	while (str[j] && str[j] != '=')
+		j++;
+	key = ft_substr(str, 0, j);
+	if (!key)
+		return (NULL);
+	value = ft_strdup(str + j + 1);
+	if (!value)
+	{
+		free(key);
+		return (NULL);
+	}
+	node = create_env_node(key, value);
+	free(key);
+	free(value);
+	return (node);
+}
+
+t_env	*dup_env(char **envp)
+{
+	t_env	*env_list;
+	t_env	*node;
+	int		i;
 
 	env_list = NULL;
 	i = 0;
 	while (envp && envp[i])
 	{
-		j = 0;
-		while (envp[i][j] && envp[i][j] != '=')
-			j++;
-		if (envp[i][j] != '=')
+		if (ft_strchr(envp[i], '='))
 		{
-			i++;
-			continue ;
+			node = extract_env_node(envp[i]);
+			if (!node)
+			{
+				free_env_list(env_list);
+				return (NULL);
+			}
+			add_env_node_back(&env_list, node);
 		}
-		key = ft_substr(envp[i], 0, j);
-		if (!key)
-		{
-			free_env_list(env_list);
-			return (NULL);
-		}
-		value = ft_strdup(envp[i] + j + 1);
-		if (!value)
-		{
-			free(key);
-			free_env_list(env_list);
-			return (NULL);
-		}
-		new_node = create_env_node(key, value);
-		free(key);
-		free(value);
-		if (!new_node)
-		{
-			free_env_list(env_list);
-			return (NULL);
-		}
-		add_env_node_back(&env_list, new_node);
 		i++;
 	}
 	return (env_list);

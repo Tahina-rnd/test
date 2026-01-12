@@ -6,7 +6,7 @@
 /*   By: tarandri <tarandri@student.42antananarivo. +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/26 10:39:18 by tarandri          #+#    #+#             */
-/*   Updated: 2026/01/11 13:50:48 by tarandri         ###   ########.fr       */
+/*   Updated: 2026/01/12 09:11:19 by tarandri         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,4 +32,26 @@ char	*ft_strjoin_free(char *s1, char *s2)
 	new_str[len1 + len2] = '\0';
 	free(s1);
 	return (new_str);
+}
+t_arg	*new_arg_node(void)
+{
+	t_arg	*node;
+
+	node = malloc(sizeof(t_arg));
+	if (!node)
+		return (NULL);
+	node->value = NULL;
+	node->next = NULL;
+	node->segments = NULL;
+	return (node);
+}
+
+void	append_val(t_arg *arg, char *str)
+{
+	char	*tmp;
+
+	if (!arg->value)
+		arg->value = ft_strdup("");
+	tmp = arg->value;
+	arg->value = ft_strjoin_free(tmp, str);
 }
