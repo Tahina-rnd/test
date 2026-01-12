@@ -6,7 +6,7 @@
 /*   By: tarandri <tarandri@student.42antananarivo. +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/26 07:45:47 by tarandri          #+#    #+#             */
-/*   Updated: 2026/01/12 12:52:00 by tarandri         ###   ########.fr       */
+/*   Updated: 2026/01/12 13:24:34 by tarandri         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,7 +32,7 @@ static int	handle_pipe(t_command **current_cmd, t_token **curr_token)
 }
 
 static int	process_token(t_command **curr_cmd, t_token **tokens,
-	t_command **head)
+	t_command **head, t_shell *shell)
 {
 	if ((*tokens)->type == WORD)
 	{
@@ -41,7 +41,7 @@ static int	process_token(t_command **curr_cmd, t_token **tokens,
 	}
 	else if ((*tokens)->type >= REDIRECT_IN && (*tokens)->type <= HEREDOC)
 	{
-		if (!parse_redir(*curr_cmd, tokens))
+		if (!parse_redir(*curr_cmd, tokens, shell))
 			return (0);
 	}
 	else if ((*tokens)->type == PIPE)
@@ -53,7 +53,7 @@ static int	process_token(t_command **curr_cmd, t_token **tokens,
 	return (1);
 }
 
-t_command	*parser(t_token *tokens)
+t_command	*parser(t_token *tokens, t_shell *shell)
 {
 	t_command	*head;
 	t_command	*curr_cmd;
@@ -63,6 +63,7 @@ t_command	*parser(t_token *tokens)
 	if (tokens->type == PIPE)
 	{
 		printf("Minishell: syntax error near unexpected token `|'\n");
+		shell->last_exit_status = 2;
 		return (NULL);
 	}
 	head = create_command();
@@ -71,8 +72,9 @@ t_command	*parser(t_token *tokens)
 	curr_cmd = head;
 	while (tokens && tokens->type != END)
 	{
-		if (!process_token(&curr_cmd, &tokens, &head))
+		if (!process_token(&curr_cmd, &tokens, &head, shell))
 		{
+			shell->last_exit_status = 2;
 			free_commands(head);
 			return (NULL);
 		}

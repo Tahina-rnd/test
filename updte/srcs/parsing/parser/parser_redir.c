@@ -6,7 +6,7 @@
 /*   By: tarandri <tarandri@student.42antananarivo. +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/29 14:31:40 by tarandri          #+#    #+#             */
-/*   Updated: 2026/01/12 08:56:10 by tarandri         ###   ########.fr       */
+/*   Updated: 2026/01/12 13:22:43 by tarandri         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -45,7 +45,7 @@ static void	redir_add_back(t_redir **lst, t_redir *new)
 	temp->next = new;
 }
 
-int	parse_redir(t_command *cmd, t_token **curr_token)
+int	parse_redir(t_command *cmd, t_token **curr_token, t_shell *shell)
 {
 	t_token	*op;
 	t_token	*file;
@@ -56,11 +56,12 @@ int	parse_redir(t_command *cmd, t_token **curr_token)
 	if (!file || file->type != WORD)
 	{
 		ft_putstr_fd("Minishell: syntax error near unexpected token `", 2);
-		if (!file || !file->literal) 
+		if (!file || !file->literal)
 			ft_putstr_fd("newline", 2);
 		else
 			ft_putstr_fd(file->literal, 2);
 		ft_putstr_fd("'\n", 2);
+		shell->last_exit_status = 2;
 		return (0);
 	}
 	new_redir = create_redir_node(file, op->type);

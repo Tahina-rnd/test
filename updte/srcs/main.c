@@ -6,7 +6,7 @@
 /*   By: tarandri <tarandri@student.42antananarivo. +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/15 09:40:43 by tarandri          #+#    #+#             */
-/*   Updated: 2026/01/12 08:06:22 by tarandri         ###   ########.fr       */
+/*   Updated: 2026/01/12 13:21:06 by tarandri         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,7 +30,7 @@ static void	process_input(t_shell *shell)
 	shell->tokens = lexer(shell->input);
 	if (shell->tokens)
 	{
-		shell->commands = parser(shell->tokens);
+		shell->commands = parser(shell->tokens, shell);
 		if (shell->commands)
 		{
 			expander(shell, shell->commands);
