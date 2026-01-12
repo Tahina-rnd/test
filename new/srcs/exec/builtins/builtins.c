@@ -6,7 +6,7 @@
 /*   By: tarandri <tarandri@student.42antananarivo. +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/17 21:32:09 by miokrako          #+#    #+#             */
-/*   Updated: 2026/01/11 14:30:56 by tarandri         ###   ########.fr       */
+/*   Updated: 2026/01/12 06:55:39 by tarandri         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -92,10 +92,26 @@ int	execute_builtin(t_command *cmd, t_shell *shell)
 	if (result != -1)
 	{
 		free(args_array);
+		if (result == -2 || result == -3)
+		{
+			if (shell->commands->next)
+				cleanup_child(shell);
+			else
+				cleanup_shell(shell);
+			exit(shell->last_exit_status);
+		}
 		return (result);
 	}
 	result = execute_builtin_part2(shell, args_array);
 	free(args_array);
+	if (result == -2 || result == -3)
+	{
+		if (shell->commands->next)
+			cleanup_child(shell);
+		else
+			cleanup_shell(shell);
+		exit(shell->last_exit_status);
+	}	
 	return (result);
 }
 

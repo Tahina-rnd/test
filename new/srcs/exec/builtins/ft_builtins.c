@@ -6,7 +6,7 @@
 /*   By: tarandri <tarandri@student.42antananarivo. +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/18 21:31:02 by miokrako          #+#    #+#             */
-/*   Updated: 2026/01/11 14:40:10 by tarandri         ###   ########.fr       */
+/*   Updated: 2026/01/12 06:54:38 by tarandri         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -130,11 +130,7 @@ static void	exit_with_error(char *arg, t_shell *shell)
 	ft_putstr_fd("minishell: exit: ", 2);
 	ft_putstr_fd(arg, 2);
 	ft_putstr_fd(": numeric argument required\n", 2);
-	if (shell->commands->next)
-		cleanup_child(shell);
-	else
-		cleanup_shell(shell);
-	exit(2);
+	shell->last_exit_status = 2;
 }
 
 int	builtin_exit(char **args, t_shell *shell)
@@ -143,21 +139,21 @@ int	builtin_exit(char **args, t_shell *shell)
 
 	if (!shell->commands->next)
 		ft_putstr_fd("exit\n", 2);
+	
 	if (args[1])
 	{
-		if (!is_valid_exit_arg(args[1]) || ft_atoll_safe(args[1], &exit_code) ==
-			-1)
+		if (!is_valid_exit_arg(args[1]) || ft_atoll_safe(args[1], &exit_code) == -1)
+		{
 			exit_with_error(args[1], shell);
+			return (-2);  // Code spécial pour exit avec erreur
+		}
 		if (args[2])
 			return (handle_too_many_args());
 	}
 	else
-		exit_code = shell->last_exit_status;
-	if (shell->commands->next)
-		cleanup_child(shell);
-	else
-		cleanup_shell(shell);
-	exit(exit_code % 256);
+		exit_code = shell->last_exit_status;	
+	shell->last_exit_status = exit_code % 256;
+	return (-3);  // Code spécial pour exit normal
 }
 
 int	builtin_env(t_env *env)

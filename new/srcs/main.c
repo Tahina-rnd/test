@@ -1,23 +1,8 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   main.c                                             :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: tarandri <tarandri@student.42antananarivo. +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/11/18 21:33:27 by tarandri          #+#    #+#             */
-/*   Updated: 2026/01/10 22:24:27 by tarandri         ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
-
 #include "../includes/exec.h"
 
 int	g_received_signal = 0;
 
-/*
-** Gestionnaire de signaux simple pour le mode interactif (readline)
-*/
-void	handle_sigint(int sig)
+static void	handle_sigint(int sig)
 {
 	(void)sig;
 	g_received_signal = sig;
@@ -27,17 +12,18 @@ void	handle_sigint(int sig)
 	rl_redisplay();
 }
 
-/*
-** Initialisation de la structure Shell et de l'environnement
-*/
 static void	init_shell(t_shell *shell, char **envp)
 {
+	char	*cwd;
+
 	shell->env = dup_env(envp);
-	// Si env est vide (env -i), on crée un env minimal pour éviter les segfaults
 	if (!shell->env)
 	{
-		shell->env = create_env_node("PWD", getcwd(NULL, 0)); // Hack rapide
-		// Idéalement faudrait aussi gérer SHLVL et _
+		cwd = getcwd(NULL, 0);
+		if (!cwd)
+			cwd = ft_strdup("/");
+		shell->env = create_env_node("PWD", cwd);
+		free(cwd);
 	}
 	shell->input = NULL;
 	shell->tokens = NULL;
@@ -45,9 +31,6 @@ static void	init_shell(t_shell *shell, char **envp)
 	shell->last_exit_status = 0;
 }
 
-/*
-** Nettoyage à chaque tour de boucle (Loop Garbage Collector)
-*/
 static void	reset_loop(t_shell *shell)
 {
 	if (shell->commands)
@@ -67,31 +50,55 @@ static void	reset_loop(t_shell *shell)
 	}
 }
 
-/*
-** Nettoyage final à la sortie du programme (exit)
-*/
 static void	cleanup_exit(t_shell *shell)
 {
-	reset_loop(shell); // Nettoie le tour courant si besoin
+	reset_loop(shell);
 	if (shell->env)
 		free_env_list(shell->env);
 	rl_clear_history();
 }
 
-/*
-** Boucle principale
-*/
+static int	is_exit_command(char *input)
+{
+	int	i;
+
+	i = 0;
+	while (input[i] && (input[i] == ' ' || input[i] == '\t'))
+		i++;
+	if (ft_strncmp(&input[i], "exit", 4) == 0)
+	{
+		i += 4;
+		while (input[i] && (input[i] == ' ' || input[i] == '\t'))
+			i++;
+		if (input[i] == '\0')
+			return (1);
+	}
+	return (0);
+}
+
+static void	process_input(t_shell *shell)
+{
+	signal(SIGINT, SIG_IGN);
+	shell->tokens = lexer(shell->input);
+	if (shell->tokens)
+	{
+		shell->commands = parser(shell->tokens);
+		if (shell->commands)
+		{
+			expander(shell, shell->commands);
+			executor(shell);
+		}
+	}
+}
+
 static void	minishell_loop(t_shell *shell)
 {
 	while (1)
 	{
-		// 1. Configuration des signaux pour le prompt
 		signal(SIGINT, handle_sigint);
-		signal(SIGQUIT, SIG_IGN); // Ignore Ctrl+\ dans le prompt
-
-		// 2. Lecture
+		signal(SIGQUIT, SIG_IGN);
 		shell->input = readline("minishell$> ");
-		if (!shell->input) // Ctrl+D détecté
+		if (!shell->input)
 		{
 			printf("exit\n");
 			break ;
@@ -99,28 +106,13 @@ static void	minishell_loop(t_shell *shell)
 		if (*shell->input)
 		{
 			add_history(shell->input);
-			
-			// 3. Parsing Pipeline
-			shell->tokens = lexer(shell->input);
-			if (shell->tokens)
+			if (is_exit_command(shell->input))
 			{
-				// Note : Parser peut retourner NULL si erreur de syntaxe
-				shell->commands = parser(shell->tokens);
-				
-				if (shell->commands)
-				{
-					// 4. Expansion
-					expander(shell, shell->commands);
-					
-					// 5. Exécution (On ignore les signaux pendant l'exec parent)
-					// C'est l'executor qui gèrera les signaux pour les enfants
-					signal(SIGINT, SIG_IGN);
-					
-					executor(shell); 
-				}
+				free(shell->input);
+				break ;
 			}
+			process_input(shell);
 		}
-		// 6. Nettoyage de l'itération
 		reset_loop(shell);
 	}
 }
@@ -131,15 +123,9 @@ int	main(int ac, char **av, char **envp)
 
 	(void)ac;
 	(void)av;
-
-	// Initialisation
 	ft_memset(&shell, 0, sizeof(t_shell));
 	init_shell(&shell, envp);
-
-	// Lancement
 	minishell_loop(&shell);
-
-	// Sortie propre
 	cleanup_exit(&shell);
 	return (shell.last_exit_status);
 }
