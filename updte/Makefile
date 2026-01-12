@@ -8,7 +8,6 @@ INCLUDES    = -I./includes -I. -I$(LIBFT_DIR)
 SRCS_MAIN   = srcs/main.c \
               srcs/main_utils.c
 
-# Parsing Sources
 SRCS_PARSING = srcs/parsing/lexer/lexer.c \
               srcs/parsing/lexer/lexer_utils.c \
               srcs/parsing/lexer/lexer_tokens.c \
@@ -16,20 +15,18 @@ SRCS_PARSING = srcs/parsing/lexer/lexer.c \
               srcs/parsing/parser/parser.c \
               srcs/parsing/parser/parser_utils.c \
               srcs/parsing/parser/parser_redir.c \
+              srcs/parsing/parser/parser_free.c \
               srcs/parsing/expander/expander.c \
               srcs/parsing/expander/expander_utils.c \
               srcs/parsing/expander/expander_redir.c \
               srcs/parsing/expander/expander_process.c \
               srcs/parsing/expander/expander_process2.c \
               srcs/parsing/utils/ft_strcmp.c \
-              srcs/parsing/utils/ft_error.c \
               srcs/parsing/utils/ft_strndup.c
 
-# Env Sources (On retire env_to_array.c car utils_env.c gere deja ca)
 SRCS_ENV     = srcs/parsing/env/env_dup_utils.c \
               srcs/parsing/env/env_duplicate.c
 
-# Exec Sources
 SRCS_EXEC    = srcs/exec/executor/exec.c \
               srcs/exec/executor/exec_child.c \
               srcs/exec/executor/exec_cmd.c \

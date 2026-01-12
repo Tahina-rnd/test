@@ -6,7 +6,7 @@
 /*   By: tarandri <tarandri@student.42antananarivo. +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/18 21:22:34 by tarandri          #+#    #+#             */
-/*   Updated: 2026/01/12 09:14:42 by tarandri         ###   ########.fr       */
+/*   Updated: 2026/01/12 12:52:35 by tarandri         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,7 +18,6 @@
 // UTILS
 int			ft_strcmp(char *s1, char *s2);
 char		*ft_strndup(const char *s, size_t n);
-void		ft_error(char *str);
 
 // ENV
 char		*get_env_value(t_env *env_list, char *key);

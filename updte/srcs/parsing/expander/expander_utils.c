@@ -6,7 +6,7 @@
 /*   By: tarandri <tarandri@student.42antananarivo. +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/26 10:39:18 by tarandri          #+#    #+#             */
-/*   Updated: 2026/01/12 09:11:19 by tarandri         ###   ########.fr       */
+/*   Updated: 2026/01/12 12:46:35 by tarandri         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,6 +33,7 @@ char	*ft_strjoin_free(char *s1, char *s2)
 	free(s1);
 	return (new_str);
 }
+
 t_arg	*new_arg_node(void)
 {
 	t_arg	*node;
