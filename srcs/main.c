@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   main.c                                             :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: miokrako <miokrako@student.42antananari    +#+  +:+       +#+        */
+/*   By: tarandri <tarandri@student.42antananarivo. +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/15 09:40:43 by tarandri          #+#    #+#             */
-/*   Updated: 2026/01/12 15:24:52 by miokrako         ###   ########.fr       */
+/*   Updated: 2026/01/12 16:32:21 by tarandri         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -45,10 +45,7 @@ static void	minishell_loop(t_shell *shell)
 		setup_prompt_signal();
 		g_received_signal = 0;
 		shell->input = readline("minishell$> ");
-
-		/* Vérifier si Ctrl+C a été pressé pendant readline */
 		check_interrupted_signal(shell);
-
 		if (!shell->input)
 		{
 			printf("exit\n");

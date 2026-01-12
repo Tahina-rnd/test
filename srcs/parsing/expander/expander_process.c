@@ -6,7 +6,7 @@
 /*   By: tarandri <tarandri@student.42antananarivo. +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/26 10:39:50 by tarandri          #+#    #+#             */
-/*   Updated: 2026/01/12 12:45:47 by tarandri         ###   ########.fr       */
+/*   Updated: 2026/01/12 16:33:36 by tarandri         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -49,7 +49,7 @@ static char	*append_var(char *res, char *str, int *i, t_shell *shell)
 		return (ft_strjoin_free(res, "$"));
 	key = ft_substr(str, *i, len);
 	if (!key)
-		return (res);	
+		return (res);
 	val = fetch_value(key, shell);
 	free(key);
 	if (!val)
@@ -78,7 +78,7 @@ char	*expand_text(char *str, t_shell *shell)
 		return (ft_strdup(""));
 	res = ft_strdup("");
 	if (!res)
-		return (NULL);	
+		return (NULL);
 	i = 0;
 	while (str[i])
 	{

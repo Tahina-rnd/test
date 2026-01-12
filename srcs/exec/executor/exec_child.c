@@ -6,7 +6,7 @@
 /*   By: miokrako <miokrako@student.42antananari    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/08 20:13:41 by miokrako          #+#    #+#             */
-/*   Updated: 2026/01/12 15:45:33 by miokrako         ###   ########.fr       */
+/*   Updated: 2026/01/12 16:23:32 by miokrako         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -41,21 +41,16 @@ void	child_process(t_command *cmd, t_shell *shell, int prev[2], int curr[2])
 {
 	setup_child_signals();
 	setup_pipes(cmd, prev, curr);
-
-	/* Traiter les redirections AVANT de vérifier s'il y a des arguments */
 	if (handle_redirections(cmd) != 0)
 	{
 		cleanup_child(shell);
 		exit(1);
 	}
-
-	/* Si pas d'arguments, sortir proprement (les redirections sont déjà créées) */
 	if (!cmd->args || !cmd->args->value)
 	{
 		cleanup_child(shell);
 		exit(0);
 	}
-
 	if (is_builtin(cmd->args->value))
 		exec_builtin_child(cmd, shell);
 	else

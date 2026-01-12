@@ -1,12 +1,12 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   lexer_word.c                                       :+:      :+:    :+:   */
+/*   lexer_segments.c                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: tarandri <tarandri@student.42antananarivo. +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/18 21:21:01 by tarandri          #+#    #+#             */
-/*   Updated: 2026/01/10 11:58:49 by tarandri         ###   ########.fr       */
+/*   Updated: 2026/01/12 16:53:34 by tarandri         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -51,34 +51,40 @@ static int	get_unquoted_len(char *input)
 	return (i);
 }
 
-int	extract_segment(t_token *token, char *input, int *i)
+static char	*get_segment(char *input, int *i, t_quote_type *type)
 {
-	t_segment	*seg;
-	char		*value;
-	int			len;
-	t_quote_type type;
+	int	len;
 
-	type = QUOTE_NONE;
 	if (input[*i] == '\'' || input[*i] == '"')
 	{
 		if (input[*i] == '\'')
-			type = QUOTE_SINGLE;
+			*type = QUOTE_SINGLE;
 		else
-			type = QUOTE_DOUBLE;
+			*type = QUOTE_DOUBLE;
 		len = get_quoted_len(input + *i, input[*i]);
 		if (len == -1)
-			return (0);
-		value = ft_substr(input, *i + 1, len - 1);
+			return (NULL);
 		*i += len + 1;
+		return (ft_substr(input, *i - len, len - 1));
 	}
-	else
-	{
-		len = get_unquoted_len(input + *i);
-		value = ft_substr(input, *i, len);
-		*i += len;
-	}
+	len = get_unquoted_len(input + *i);
+	if (len <= 0)
+		return (NULL);
+	*i += len;
+	return (ft_substr(input, *i - len, len));
+}
+
+int	extract_segment(t_token *token, char *input, int *i)
+{
+	t_segment		*seg;
+	char			*value;
+	t_quote_type	type;
+
+	type = QUOTE_NONE;
+	value = get_segment(input, i, &type);
+	if (!value)
+		return (0);
 	seg = create_segment(value, type);
 	segment_add_back(&(token->segments), seg);
 	return (1);
 }
-

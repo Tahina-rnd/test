@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   minishell.h                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: tarandri <tarandri@student.42antananarivo. +#+  +:+       +#+        */
+/*   By: miokrako <miokrako@student.42antananari    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/18 20:22:34 by tarandri          #+#    #+#             */
-/*   Updated: 2026/01/12 08:39:05 by tarandri         ###   ########.fr       */
+/*   Updated: 2026/01/12 16:52:13 by miokrako         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,8 +28,7 @@
 # include <readline/history.h>
 # include "../libft/libft.h"
 
-extern int g_received_signal;
-
+extern int	g_received_signal;
 
 typedef struct s_env
 {
@@ -59,43 +58,43 @@ typedef enum e_quote_type
 
 typedef struct s_segment
 {
-	char            *value;
-	t_quote_type    quote;
-	struct s_segment *next;
+	char				*value;
+	t_quote_type		quote;
+	struct s_segment	*next;
 }	t_segment;
 
 typedef struct s_token
 {
-    t_token_type    type;
-    t_segment       *segments;
-    char            *literal;
-    struct s_token  *next;
-}   t_token;
+	t_token_type	type;
+	t_segment		*segments;
+	char			*literal;
+	struct s_token	*next;
+}	t_token;
 
 typedef struct s_redir
 {
-    char            *file;
-    int             fd;
-    int             append_mode;
-    struct s_redir  *next;
-} t_redir;
+	char			*file;
+	int				fd;
+	int				append_mode;
+	struct s_redir	*next;
+}	t_redir;
 
 typedef struct s_arg
 {
-    char				*value;
-	struct s_segment 	*segments;
-    int					was_quoted;
-    struct s_arg		*next;
+	char				*value;
+	struct s_segment	*segments;
+	int					was_quoted;
+	struct s_arg		*next;
 }	t_arg;
 
 typedef struct s_command
 {
-    t_arg			*args;
-    t_redir			*input_redirection;
-    t_redir			*output_redirection;
-    t_redir			*heredoc;
-    struct s_command *next;
-} t_command;
+	t_arg				*args;
+	t_redir				*input_redirection;
+	t_redir				*output_redirection;
+	t_redir				*heredoc;
+	struct s_command	*next;
+}	t_command;
 
 typedef struct s_shell
 {
@@ -105,10 +104,5 @@ typedef struct s_shell
 	t_command	*commands;
 	int			last_exit_status;
 }	t_shell;
-
-void    init_shell(t_shell *shell, char **envp);
-void    reset_loop(t_shell *shell);
-void    cleanup_exit(t_shell *shell);
-int     is_exit_command(char *input);
 
 #endif

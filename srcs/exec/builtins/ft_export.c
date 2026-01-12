@@ -6,11 +6,27 @@
 /*   By: miokrako <miokrako@student.42antananari    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/04 22:37:54 by tarandri          #+#    #+#             */
-/*   Updated: 2026/01/12 15:15:30 by miokrako         ###   ########.fr       */
+/*   Updated: 2026/01/12 17:33:24 by miokrako         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../../../includes/exec.h"
+
+static int	is_valid_identifier_export(const char *str)
+{
+	int	i;
+
+	if (!str || (!ft_isalpha(str[0]) && str[0] != '_'))
+		return (0);
+	i = 1;
+	while (str[i] && str[i] != '=')
+	{
+		if (!ft_isalnum(str[i]) && str[i] != '_')
+			return (0);
+		i++;
+	}
+	return (1);
+}
 
 static void	print_export(t_shell *shell)
 {
@@ -59,7 +75,7 @@ int	ft_export(t_shell *shell, char **args)
 	has_error = 0;
 	while (args[i])
 	{
-		if (!is_valid_identifier(args[i]))
+		if (!is_valid_identifier_export(args[i]))
 		{
 			printf("export: `%s': not a valid identifier\n", args[i]);
 			has_error = 1;

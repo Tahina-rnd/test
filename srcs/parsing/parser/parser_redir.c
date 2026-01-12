@@ -6,7 +6,7 @@
 /*   By: tarandri <tarandri@student.42antananarivo. +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/29 14:31:40 by tarandri          #+#    #+#             */
-/*   Updated: 2026/01/12 13:22:43 by tarandri         ###   ########.fr       */
+/*   Updated: 2026/01/12 16:57:09 by tarandri         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -45,6 +45,17 @@ static void	redir_add_back(t_redir **lst, t_redir *new)
 	temp->next = new;
 }
 
+static void	if_not_word(t_token *file, t_shell *shell)
+{
+	ft_putstr_fd("Minishell: syntax error near unexpected token `", 2);
+	if (!file || !file->literal)
+		ft_putstr_fd("newline", 2);
+	else
+		ft_putstr_fd(file->literal, 2);
+	ft_putstr_fd("'\n", 2);
+	shell->last_exit_status = 2;
+}
+
 int	parse_redir(t_command *cmd, t_token **curr_token, t_shell *shell)
 {
 	t_token	*op;
@@ -55,13 +66,7 @@ int	parse_redir(t_command *cmd, t_token **curr_token, t_shell *shell)
 	file = op->next;
 	if (!file || file->type != WORD)
 	{
-		ft_putstr_fd("Minishell: syntax error near unexpected token `", 2);
-		if (!file || !file->literal)
-			ft_putstr_fd("newline", 2);
-		else
-			ft_putstr_fd(file->literal, 2);
-		ft_putstr_fd("'\n", 2);
-		shell->last_exit_status = 2;
+		if_not_word(file, shell);
 		return (0);
 	}
 	new_redir = create_redir_node(file, op->type);
@@ -72,7 +77,7 @@ int	parse_redir(t_command *cmd, t_token **curr_token, t_shell *shell)
 	else if (op->type == HEREDOC)
 		redir_add_back(&(cmd->heredoc), new_redir);
 	else
-		redir_add_back(&(cmd->output_redirection), new_redir);	
-	*curr_token = file;	
+		redir_add_back(&(cmd->output_redirection), new_redir);
+	*curr_token = file;
 	return (1);
 }
