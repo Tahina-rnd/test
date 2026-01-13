@@ -6,7 +6,7 @@
 /*   By: miokrako <miokrako@student.42antananari    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/08 20:32:05 by miokrako          #+#    #+#             */
-/*   Updated: 2026/01/12 09:41:16 by miokrako         ###   ########.fr       */
+/*   Updated: 2026/01/13 07:04:00 by miokrako         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,36 +36,35 @@ char	*try_paths(char **paths, char *cmd)
 	return (NULL);
 }
 
-static void	handle_exec_error(char *cmd, char *path)
+static void	cleanup_and_exit(char *path, char **args_array,
+	t_shell *shell, int code)
+{
+	free(path);
+	free(args_array);
+	cleanup_child(shell);
+	exit(code);
+}
+
+static void	handle_exec_error(char *cmd, char *path, char **args_array,
+		t_shell *shell)
 {
 	struct stat	path_stat;
 
+	if (access(path, F_OK) == -1)
+	{
+		ft_error(": No such file or directory\n", cmd);
+		cleanup_and_exit(path, args_array, shell, 127);
+	}
 	if (stat(path, &path_stat) == 0 && S_ISDIR(path_stat.st_mode))
 	{
-		ft_putstr_fd("minishell: ", 2);
-		ft_putstr_fd(cmd, 2);
-		ft_putstr_fd(": is a directory\n", 2);
-		free(path);
-		exit(126);
+		ft_error(": is a directory\n", cmd);
+		cleanup_and_exit(path, args_array, shell, 126);
 	}
 	if (access(path, X_OK) == -1)
 	{
-		ft_putstr_fd("minishell: ", 2);
-		ft_putstr_fd(cmd, 2);
-		ft_putstr_fd(": Permission denied\n", 2);
-		free(path);
-		exit(126);
+		ft_error(": Permission denied\n", cmd);
+		cleanup_and_exit(path, args_array, shell, 126);
 	}
-}
-
-static void	handle_command_not_found(char *cmd, char **args, t_shell *shell)
-{
-	ft_putstr_fd("minishell: ", 2);
-	ft_putstr_fd(cmd, 2);
-	ft_putstr_fd(": command not found\n", 2);
-	free(args);
-	cleanup_child(shell);
-	exit(127);
 }
 
 static void	try_shell_exec(char *path, char **env_tab)
@@ -100,7 +99,7 @@ void	exec_simple_cmd_with_array(t_command *cmd, t_env *env,
 	path = get_path(env, args_array[0]);
 	if (!path)
 		handle_command_not_found(args_array[0], args_array, shell);
-	handle_exec_error(args_array[0], path);
+	handle_exec_error(args_array[0], path, args_array, shell);
 	env_tab = env_to_tab(env);
 	execve(path, args_array, env_tab);
 	try_shell_exec(path, env_tab);

@@ -6,20 +6,21 @@
 /*   By: tarandri <tarandri@student.42antananarivo. +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/15 09:40:43 by tarandri          #+#    #+#             */
-/*   Updated: 2026/01/12 16:31:36 by tarandri         ###   ########.fr       */
+/*   Updated: 2026/01/13 14:07:12 by tarandri         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../includes/exec.h"
 
-static char	*ft_getpwd(void)
+static void	if_env(t_env	*shlvl_node, t_env *underscore_node,
+					t_env *oldpwd_node, t_shell *shell)
 {
-	char	*cwd;
-
-	cwd = getcwd(NULL, 0);
-	if (!cwd)
-		cwd = ft_strdup("/");
-	return (cwd);
+	if (shlvl_node)
+		add_env_node(&shell->env, shlvl_node);
+	if (underscore_node)
+		add_env_node(&shell->env, underscore_node);
+	if (oldpwd_node)
+		add_env_node(&shell->env, oldpwd_node);
 }
 
 void	init_shell(t_shell *shell, char **envp)
@@ -28,21 +29,22 @@ void	init_shell(t_shell *shell, char **envp)
 	t_env	*pwd_node;
 	t_env	*shlvl_node;
 	t_env	*underscore_node;
+	t_env	*oldpwd_node;
 
 	init_env(shell, envp);
 	if (!shell->env)
 	{
-		cwd = ft_getpwd();
+		cwd = getcwd(NULL, 0);
+		if (!cwd)
+			cwd = ft_strdup("/");
 		pwd_node = new_env_node_kv("PWD", cwd);
 		shlvl_node = new_env_node_kv("SHLVL", "1");
 		underscore_node = new_env_node_kv("_", "/usr/bin/env");
+		oldpwd_node = new_env_node_kv("OLDPWD", "");
 		free(cwd);
 		if (pwd_node)
 			shell->env = pwd_node;
-		if (shlvl_node)
-			add_env_node(&shell->env, shlvl_node);
-		if (underscore_node)
-			add_env_node(&shell->env, underscore_node);
+		if_env(shlvl_node, underscore_node, oldpwd_node, shell);
 	}
 	shell->input = NULL;
 	shell->tokens = NULL;

@@ -6,7 +6,7 @@
 /*   By: miokrako <miokrako@student.42antananari    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/18 21:31:02 by miokrako          #+#    #+#             */
-/*   Updated: 2026/01/11 23:17:11 by miokrako         ###   ########.fr       */
+/*   Updated: 2026/01/13 12:15:05 by miokrako         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -74,7 +74,8 @@ int	builtin_env(t_env *env)
 {
 	while (env)
 	{
-		printf("%s=%s\n", env->key, env->value);
+		if (env->value && env->value[0] != '\0')
+			printf("%s=%s\n", env->key, env->value);
 		env = env->next;
 	}
 	return (0);

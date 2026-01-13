@@ -6,7 +6,7 @@
 /*   By: tarandri <tarandri@student.42antananarivo. +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/26 07:45:47 by tarandri          #+#    #+#             */
-/*   Updated: 2026/01/12 16:59:13 by tarandri         ###   ########.fr       */
+/*   Updated: 2026/01/13 12:39:46 by tarandri         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,12 +17,12 @@ static int	handle_pipe(t_command **current_cmd, t_token **curr_token)
 	if (!(*current_cmd)->args && !(*current_cmd)->input_redirection
 		&& !(*current_cmd)->output_redirection && !(*current_cmd)->heredoc)
 	{
-		printf("Minishell: syntax error near unexpected token `|'\n");
+		ft_putstr_fd("Minishell: syntax error near unexpected token `|'\n", 2);
 		return (0);
 	}
 	if ((*curr_token)->next && (*curr_token)->next->type == END)
 	{
-		printf("Minishell: syntax error near unexpected token `|'\n");
+		ft_putstr_fd("Minishell: syntax error near unexpected token `|'\n", 2);
 		return (0);
 	}
 	*current_cmd = create_command();
@@ -55,7 +55,7 @@ static int	process_token(t_command **curr_cmd, t_token **tokens,
 
 static void	if_pipe(t_shell *shell)
 {
-	printf("Minishell: syntax error near unexpected token `|'\n");
+	ft_putstr_fd("Minishell: syntax error near unexpected token `|'\n", 2);
 	shell->last_exit_status = 2;
 }
 

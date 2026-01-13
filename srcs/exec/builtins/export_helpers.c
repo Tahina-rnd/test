@@ -6,7 +6,7 @@
 /*   By: miokrako <miokrako@student.42antananari    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/11 23:05:52 by miokrako          #+#    #+#             */
-/*   Updated: 2026/01/12 09:42:25 by miokrako         ###   ########.fr       */
+/*   Updated: 2026/01/13 06:26:03 by miokrako         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,22 +27,6 @@ t_env	*exp_create_env_node(const char *key, const char *value)
 	new_node->next = NULL;
 	return (new_node);
 }
-
-// int	is_valid_identifier(const char *str)
-// {
-// 	int	i;
-
-// 	if (!str || (!ft_isalpha(str[0]) && str[0] != '_'))
-// 		return (0);
-// 	i = 1;
-// 	while (str[i] && str[i] != '=')
-// 	{
-// 		if (!ft_isalnum(str[i]) && str[i] != '_')
-// 			return (0);
-// 		i++;
-// 	}
-// 	return (1);
-// }
 
 char	*extract_key(const char *arg)
 {

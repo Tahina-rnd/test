@@ -6,7 +6,7 @@
 /*   By: tarandri <tarandri@student.42antananarivo. +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/18 21:21:01 by tarandri          #+#    #+#             */
-/*   Updated: 2026/01/12 16:53:34 by tarandri         ###   ########.fr       */
+/*   Updated: 2026/01/13 12:38:50 by tarandri         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,7 +34,7 @@ static int	get_quoted_len(char *input, char quote)
 		i++;
 	if (!input[i])
 	{
-		printf("Error: Unclosed quote\n");
+		ft_putstr_fd("Error: Unclosed quote\n", 2);
 		return (-1);
 	}
 	return (i);

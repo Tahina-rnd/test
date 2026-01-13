@@ -6,7 +6,7 @@
 /*   By: miokrako <miokrako@student.42antananari    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/24 10:49:05 by miokrako          #+#    #+#             */
-/*   Updated: 2026/01/12 16:25:27 by miokrako         ###   ########.fr       */
+/*   Updated: 2026/01/13 12:23:35 by miokrako         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -88,6 +88,23 @@ void	init_underscore(t_env **env)
 		curr = curr->next;
 	}
 	node = new_env_node_kv("_", "/usr/bin/env");
+	if (node)
+		add_env_node(env, node);
+}
+
+void	init_oldpwd(t_env **env)
+{
+	t_env	*node;
+	t_env	*curr;
+
+	curr = *env;
+	while (curr)
+	{
+		if (ft_strcmp(curr->key, "OLDPWD") == 0)
+			return ;
+		curr = curr->next;
+	}
+	node = new_env_node_kv("OLDPWD", "");
 	if (node)
 		add_env_node(env, node);
 }

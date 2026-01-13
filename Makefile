@@ -61,6 +61,7 @@ SRCS_EXEC    = srcs/exec/executor/exec.c \
               srcs/exec/utils/utils_env_node.c \
               srcs/exec/utils/utils_env.c \
               srcs/exec/utils/utils_free.c \
+              srcs/exec/utils/ft_error.c \
               srcs/exec/signal/signal.c \
               srcs/exec/signal/handler.c \
 
@@ -73,7 +74,7 @@ all: $(NAME)
 $(NAME): $(LIBFT) $(OBJS)
 	@echo "Compiling Minishell..."
 	$(CC) $(CFLAGS) $(OBJS) $(LIBS) -o $(NAME)
-	@echo "✅ Minishell ready!"
+	@echo "Minishell ready!"
 
 %.o: %.c
 	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@

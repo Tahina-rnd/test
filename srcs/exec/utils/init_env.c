@@ -6,7 +6,7 @@
 /*   By: miokrako <miokrako@student.42antananari    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/24 10:49:05 by miokrako          #+#    #+#             */
-/*   Updated: 2026/01/11 23:25:36 by miokrako         ###   ########.fr       */
+/*   Updated: 2026/01/13 11:53:26 by miokrako         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -55,4 +55,5 @@ void	init_env(t_shell *shell, char **envp)
 	init_pwd(&shell->env);
 	init_shlvl(&shell->env);
 	init_underscore(&shell->env);
+	init_oldpwd(&shell->env);
 }

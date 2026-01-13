@@ -6,7 +6,7 @@
 /*   By: tarandri <tarandri@student.42antananarivo. +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/26 10:39:50 by tarandri          #+#    #+#             */
-/*   Updated: 2026/01/12 09:12:45 by tarandri         ###   ########.fr       */
+/*   Updated: 2026/01/13 12:37:39 by tarandri         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,7 +21,7 @@ static int	expand_redir_file(t_redir *redir, t_shell *shell)
 		expanded = expand_text(redir->file, shell);
 		if (!expanded || ft_strlen(expanded) == 0 || ft_strchr(expanded, ' '))
 		{
-			printf("Minishell: %s: ambiguous redirect\n", redir->file);
+			ft_error(": ambiguous redirect\n", redir->file);
 			if (expanded)
 				free(expanded);
 			free(redir->file);

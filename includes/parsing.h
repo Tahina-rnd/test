@@ -6,7 +6,7 @@
 /*   By: tarandri <tarandri@student.42antananarivo. +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/18 21:22:34 by tarandri          #+#    #+#             */
-/*   Updated: 2026/01/12 17:00:02 by tarandri         ###   ########.fr       */
+/*   Updated: 2026/01/13 14:05:03 by tarandri         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -47,5 +47,6 @@ int			process_redirs(t_redir *lst, t_shell *shell);
 t_arg		*new_arg_node(void);
 void		append_val(t_arg *arg, char *str);
 void		free_command(t_command *cmd);
+void		ft_error(char *str, char *cmd);
 
 #endif
