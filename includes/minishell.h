@@ -6,7 +6,7 @@
 /*   By: tarandri <tarandri@student.42antananarivo. +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/18 20:22:34 by tarandri          #+#    #+#             */
-/*   Updated: 2026/01/13 14:04:56 by tarandri         ###   ########.fr       */
+/*   Updated: 2026/01/14 22:15:05 by tarandri         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -71,6 +71,7 @@ typedef struct s_redir
 	char			*file;
 	int				fd;
 	int				append_mode;
+	int				index;
 	struct s_redir	*next;
 }	t_redir;
 
@@ -88,6 +89,7 @@ typedef struct s_command
 	t_redir				*input_redirection;
 	t_redir				*output_redirection;
 	t_redir				*heredoc;
+	int					redir_counter;
 	struct s_command	*next;
 }	t_command;
 

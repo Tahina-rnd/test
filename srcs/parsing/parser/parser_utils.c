@@ -6,7 +6,7 @@
 /*   By: tarandri <tarandri@student.42antananarivo. +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/29 14:57:18 by tarandri          #+#    #+#             */
-/*   Updated: 2026/01/12 12:49:56 by tarandri         ###   ########.fr       */
+/*   Updated: 2026/01/14 22:14:37 by tarandri         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,6 +23,7 @@ t_command	*create_command(void)
 	cmd->input_redirection = NULL;
 	cmd->output_redirection = NULL;
 	cmd->heredoc = NULL;
+	cmd->redir_counter = 0;
 	cmd->next = NULL;
 	return (cmd);
 }

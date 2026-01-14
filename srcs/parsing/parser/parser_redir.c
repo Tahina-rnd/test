@@ -6,7 +6,7 @@
 /*   By: tarandri <tarandri@student.42antananarivo. +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/29 14:31:40 by tarandri          #+#    #+#             */
-/*   Updated: 2026/01/12 16:57:09 by tarandri         ###   ########.fr       */
+/*   Updated: 2026/01/14 22:12:32 by tarandri         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -72,6 +72,7 @@ int	parse_redir(t_command *cmd, t_token **curr_token, t_shell *shell)
 	new_redir = create_redir_node(file, op->type);
 	if (!new_redir)
 		return (0);
+	new_redir->index = cmd->redir_counter++;
 	if (op->type == REDIRECT_IN)
 		redir_add_back(&(cmd->input_redirection), new_redir);
 	else if (op->type == HEREDOC)

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   handle_redirection.c                               :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: miokrako <miokrako@student.42antananari    +#+  +:+       +#+        */
+/*   By: tarandri <tarandri@student.42antananarivo. +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/24 13:32:52 by miokrako          #+#    #+#             */
-/*   Updated: 2026/01/12 17:39:57 by miokrako         ###   ########.fr       */
+/*   Updated: 2026/01/14 22:14:11 by tarandri         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -68,18 +68,33 @@ static int	handle_all_output_redirections(t_redir *output_list)
 
 int	handle_redirections(t_command *cmd)
 {
+	t_redir	*last_hd;
+	t_redir	*last_in;
+	int		ret;
+
 	if (!cmd)
 		return (0);
+	last_hd = NULL;
+	last_in = NULL;
+	ret = 0;
 	if (cmd->heredoc)
+		last_hd = get_last_redir(cmd->heredoc);
+	if (cmd->input_redirection)
+		last_in = get_last_redir(cmd->input_redirection);
+	if (last_hd && last_in)
 	{
-		if (handle_input_redirections(cmd->heredoc))
-			return (1);
+		if (last_hd->index > last_in->index)
+			ret = handle_input_redirections(cmd->heredoc);
+		else
+			ret = handle_input_redirections(cmd->input_redirection);
 	}
-	else if (cmd->input_redirection)
-	{
-		if (handle_input_redirections(cmd->input_redirection))
-			return (1);
-	}
+	else if (last_hd)
+		ret = handle_input_redirections(cmd->heredoc);
+	else if (last_in)
+		ret = handle_input_redirections(cmd->input_redirection);
+
+	if (ret != 0)
+		return (1);
 	if (cmd->output_redirection)
 	{
 		if (handle_all_output_redirections(cmd->output_redirection))
