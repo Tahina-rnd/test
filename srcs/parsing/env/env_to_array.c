@@ -6,7 +6,7 @@
 /*   By: tarandri <tarandri@student.42antananarivo. +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/04 22:42:18 by tarandri          #+#    #+#             */
-/*   Updated: 2026/01/14 16:16:07 by tarandri         ###   ########.fr       */
+/*   Updated: 2026/01/14 20:31:29 by tarandri         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,28 +14,16 @@
 
 static char	*create_env_string(const char *key, const char *value)
 {
-	int		key_len;
-	int		value_len;
 	char	*result;
-	int		i;
-	int		j;
+	char	*tmp;
 
-	key_len = ft_strlen(key);
-	value_len = ft_strlen(value);
-	result = malloc(sizeof(char) * (key_len + value_len + 2));
-	if (!result)
+	if (!value)
+		return (ft_strdup(key));
+	tmp = ft_strjoin(key, "=");
+	if (!tmp)
 		return (NULL);
-	i = 0;
-	while (key[i])
-	{
-		result[i] = key[i];
-		i++;
-	}
-	result[i++] = '=';
-	j = 0;
-	while (value[j])
-		result[i++] = value[j++];
-	result[i] = '\0';
+	result = ft_strjoin(tmp, value);
+	free(tmp);
 	return (result);
 }
 

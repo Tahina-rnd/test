@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ft_export_utils.c                                  :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: miokrako <miokrako@student.42antananari    +#+  +:+       +#+        */
+/*   By: tarandri <tarandri@student.42antananarivo. +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/27 15:18:09 by tarandri          #+#    #+#             */
-/*   Updated: 2026/01/14 17:04:37 by miokrako         ###   ########.fr       */
+/*   Updated: 2026/01/14 20:32:21 by tarandri         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -54,23 +54,41 @@ static void	sort_strings(char **arr)
 	}
 }
 
+static void	print_export_line(char *str)
+{
+	int	i;
+
+	ft_putstr_fd("declare -x ", 1);
+	i = 0;
+	while (str[i] && str[i] != '=')
+	{
+		ft_putchar_fd(str[i], 1);
+		i++;
+	}
+	if (str[i] == '=')
+	{
+		ft_putstr_fd("=\"", 1);
+		ft_putstr_fd(str + i + 1, 1);
+		ft_putstr_fd("\"", 1);
+	}
+	ft_putchar_fd('\n', 1);
+}
+
 void	export_onl(t_shell *shell)
 {
-	t_env	*current;
-	int		count;
 	char	**envp;
+	int		i;
 
 	envp = env_to_array(shell->env);
-	count = strlen_tab(envp);
+	if (!envp)
+		return ;
 	sort_strings(envp);
-	current = dup_env(envp);
-	while (current)
+	i = 0;
+	while (envp[i])
 	{
-		if (current->value && *current->value)
-			printf("declare -x %s=\"%s\"\n", current->key, current->value);
-		else
-			printf("declare -x %s\n", current->key);
-		current = current->next;
+		print_export_line(envp[i]);
+		i++;
 	}
-	free(envp);
+	free_tab(envp);
 }
+

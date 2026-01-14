@@ -6,7 +6,7 @@
 /*   By: tarandri <tarandri@student.42antananarivo. +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/04 22:37:54 by tarandri          #+#    #+#             */
-/*   Updated: 2026/01/14 16:13:05 by tarandri         ###   ########.fr       */
+/*   Updated: 2026/01/14 19:48:32 by tarandri         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -61,7 +61,7 @@ static int	process_export_arg(t_shell *shell, char *arg)
 		free(value);
 	}
 	else
-		update_or_add_env(shell, key, "");
+		update_or_add_env(shell, key, NULL);
 	free(key);
 	return (0);
 }

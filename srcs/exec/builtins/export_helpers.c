@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   export_helpers.c                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: miokrako <miokrako@student.42antananari    +#+  +:+       +#+        */
+/*   By: tarandri <tarandri@student.42antananarivo. +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/01/11 23:05:52 by miokrako          #+#    #+#             */
-/*   Updated: 2026/01/13 22:31:01 by miokrako         ###   ########.fr       */
+/*   Created: 2026/01/11 23:05:52 by tarandri          #+#    #+#             */
+/*   Updated: 2026/01/14 19:49:19 by tarandri         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -71,7 +71,10 @@ int	update_or_add_env(t_shell *shell, char *key, char *value)
 		if (ft_strcmp(current->key, key) == 0)
 		{
 			free(current->value);
-			current->value = ft_strdup(value);
+			if (value)
+				current->value = ft_strdup(value);
+			else
+				current->value = NULL;
 			return (0);
 		}
 		current = current->next;
