@@ -6,7 +6,7 @@
 /*   By: miokrako <miokrako@student.42antananari    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/26 13:28:19 by miokrako          #+#    #+#             */
-/*   Updated: 2026/01/12 09:51:52 by miokrako         ###   ########.fr       */
+/*   Updated: 2026/01/13 14:10:51 by miokrako         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,18 +25,6 @@ void	free_env(t_env *env)
 		env = tmp;
 	}
 }
-
-// void	free_commands(t_command *commands)
-// {
-// 	t_command	*tmp;
-
-// 	while (commands)
-// 	{
-// 		tmp = commands->next;
-// 		free_command(commands);
-// 		commands = tmp;
-// 	}
-// }
 
 void	free_tab_partial(char **tab, int count)
 {

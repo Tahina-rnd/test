@@ -1,50 +1,195 @@
 1 - VITA
-minishell$> export val1 1val val2
-export: `1val': not a valid identifier
-minishell$> echo $?
+Analysez ceci, detaillez le probleme et la solution a faire
+
+bash-5.1$ ls > /dev/pts/2 | < assag
+bash: assag: No such file or directory
+includes  libft  Makefile  minishell  notes  rl.supp  srcs
+bash-5.1$ echo $?
 0
-Au lieu de 1
-
-bash:
-miokrako@c1r5s4:~/Music/Minishell12$ export val1 1val val2
-bash: export: `1val': not a valid identifier
-miokrako@c1r5s4:~/Music/Minishell12$ echo $?
-1
-
-2 -
-minishell$> > 1 > 2
-minishell$> ls
-1  includes  libft  Makefile  minishell  notes  rl.supp  srcs  t1.sh
-minishell$>
-
-
-bash-5.1$ > 1 > 2
-bash-5.1$ ls
-1  2  includes  libft  Makefile  minishell  notes  rl.supp  srcs  t1.sh
 bash-5.1$
 
-3 - VITA
+
+minishell$> ls > /dev/pts/2 | < assag
+minishell: assag: No such file or directory
+includes  libft  Makefile  minishell  notes  rl.supp  srcs
+minishell$> echo $?
+1
+minishell$>
+
+---------
+2- VITA
+
+minishell$> mkdir a
+minishell$> mkdir a/b
+minishell$> cd a/b
+minishell$> pwd
+/home/miokrako/Music/TAH/a/b
+minishell$> rm -rf ../../a
+minishell$> pwd
+minishell: pwd: No such file or directory
+minishell$> cd ..
+minishell$> pwd
+minishell: pwd: No such file or directory
+minishell$> cd ..
+minishell$> pwd
+/home/miokrako/Music/TAH
+minishell$>
+
+miokrako@c1r6s6:~/Music/TAH$ mkdir a
+miokrako@c1r6s6:~/Music/TAH$ mkdir a/b
+miokrako@c1r6s6:~/Music/TAH$ cd a/b
+miokrako@c1r6s6:~/Music/TAH/a/b$ pwd
+/home/miokrako/Music/TAH/a/b
+miokrako@c1r6s6:~/Music/TAH/a/b$ rm -rf ../../a
+miokrako@c1r6s6:~/Music/TAH/a/b$ pwd
+/home/miokrako/Music/TAH/a/b
+miokrako@c1r6s6:~/Music/TAH/a/b$ cd ..
+cd: error retrieving current directory: getcwd: cannot access parent directories: No such file or directory
+miokrako@c1r6s6:~/Music/TAH/a/b/..$ pwd
+/home/miokrako/Music/TAH/a/b/..
+miokrako@c1r6s6:~/Music/TAH/a/b/..$ cd ..
+miokrako@c1r6s6:~/Music/TAH$ pwd
+/home/miokrako/Music/TAH
+miokrako@c1r6s6:~/Music/TAH$
+
+
+
+tokony tazominy ny oldpwd dia concatenena amin iny ny cd manaraka.
+
+--------------
+
+3-
+minishell$> << end < rl.supp cat -e
+> popo
+> pepe
+> end
+popo$
+pepe$
+minishell$>
+
+miokrako@c1r6s6:~/Music/TAH$ << end < rl.supp cat -e
+> popo
+> pepe
+> end
+{$
+   ignore_readlines_errors$
+   Memcheck:Leak$
+   ...$
+   obj:*/libreadline.so.*$
+}$
+miokrako@c1r6s6:~/Music/TAH$
+
+
+--------------------
+4-VITA
+export >>> alphabetical order
+
+--------------------
+5- VITA
+tarandri@c1r6s8:~/Documents/minishell$ << 1 << 2 << 3 << 4 << 5 << 6 << 7 << 8 << 9 << 10 << 11 << 12 << 13 << 14 << 15 << 16 << 17 ls
+bash: maximum here-document count exceeded
+
+----------------------
+6- VITA
+<< a cat : creer file isakn ny heredoc iray
+
+minishell$> << a cat
+> p
+> o
+> p
+> a
+minishell: /tmp/.heredoc_a_0: No such file or directory
+minishell$>
+
+minishell$> << a cat
+> i
+> t
+> p
+> a
+i
+t
+p
+minishell$>
+
+
+
+----------------------
+7-
+… : tokony chemin relatif : 127 ( message d erreur tsy mety)
+
+miokrako@c1r6s6:~/Music/TAH$ .../
+bash: .../: No such file or directory
+miokrako@c1r6s6:~/Music/TAH$ echo $?
+127
+miokrako@c1r6s6:~/Music/TAH$ .../khk
+bash: .../khk: No such file or directory
+miokrako@c1r6s6:~/Music/TAH$
+
+minishell$> .../
+minishell: .../: command not found
+minishell$> echo $?
+127
+minishell$> .../ygk
+minishell: .../ygk: command not found
+minishell$>
+
+
+----------------------
+8-
+Dia signal raha cat tapahana sigquit dia aveo atao ctrl+c dia tokony isy 131 foana ny echo $?
+
+miokrako@c1r6s6:~/Music/TAH$ cat
+^\Quit (core dumped)
+miokrako@c1r6s6:~/Music/TAH$ ^C
+miokrako@c1r6s6:~/Music/TAH$ ^C
+miokrako@c1r6s6:~/Music/TAH$ ^C
+miokrako@c1r6s6:~/Music/TAH$ echo $?
+131
+miokrako@c1r6s6:~/Music/TAH$
+
+
+minishell$> cat
+^\Quit (core dumped)
+minishell$> ^C
 minishell$> ^C
 minishell$> ^C
 minishell$> echo $?
-0
-minishell$>
-
-bash:
-miokrako@c1r5s4:~/Music/Minishell12$ ^C
-miokrako@c1r5s4:~/Music/Minishell12$ echo $?
 130
-
-4- VITA
-minishell$> env
-PWD=/home/miokrako/Music/Minishell12
 minishell$>
 
-bash:
-c1r5s4% env -i bash
-miokrako@c1r5s4:/home/miokrako/Music/Minishell12$ env
-PWD=/home/miokrako/Music/Minishell12
-SHLVL=1
-_=/usr/bin/env
-miokrako@c1r5s4:/home/miokrako/Music/Minishell12$
+
+-----------------------
+9-VITA
+minishell$> .
+minishell: ..: command not found
+> tokony point iray
+
+------------------------
+
+10-
+tarandri@c1r6s8:~/Documents/minishell$ echo $PATH
+/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+tarandri@c1r6s8:~/Documents/minishell$ unset PATH
+tarandri@c1r6s8:~/Documents/minishell$ minishell
+minishell$>
+
+> raha ts misy PATH dia mijery ao amin ny dossier courant
+
+miokrako@c1r6s6:~/Music/TAH$ minishell
+minishell: command not found
+miokrako@c1r6s6:~/Music/TAH$ unset PATH
+miokrako@c1r6s6:~/Music/TAH$ minishell
+minishell$>
+
+minishell$> minishell
+minishell: minishell: command not found
+minishell$> unset PATH
+minishell$> minishell
+minishell: minishell: command not found
+minishell$>
+
+
+-------------------------
+
+
 

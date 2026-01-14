@@ -18,20 +18,22 @@ SRCS_PARSING = srcs/parsing/lexer/lexer.c \
               srcs/parsing/parser/parser_free.c \
               srcs/parsing/expander/expander.c \
               srcs/parsing/expander/expander_utils.c \
-              srcs/parsing/expander/expander_redir.c \
+              srcs/parsing/expander/expander_word.c \
               srcs/parsing/expander/expander_process.c \
               srcs/parsing/expander/expander_process2.c \
               srcs/parsing/utils/ft_strcmp.c \
               srcs/parsing/utils/ft_strndup.c
 
 SRCS_ENV     = srcs/parsing/env/env_dup_utils.c \
-              srcs/parsing/env/env_duplicate.c
+              srcs/parsing/env/env_duplicate.c \
+              srcs/parsing/env/env_to_array.c
 
 SRCS_EXEC    = srcs/exec/executor/exec.c \
               srcs/exec/executor/exec_child.c \
               srcs/exec/executor/exec_helper.c \
               srcs/exec/executor/exec_cmd.c \
               srcs/exec/executor/pipe_and_fork.c \
+              srcs/exec/executor/wait_children.c \
               srcs/exec/builtins/builtins.c \
               srcs/exec/builtins/builtins_parent.c \
               srcs/exec/builtins/builtins_exec.c \
@@ -42,6 +44,7 @@ SRCS_EXEC    = srcs/exec/executor/exec.c \
               srcs/exec/builtins/ft_cd_utils.c \
               srcs/exec/builtins/ft_exit.c \
               srcs/exec/builtins/ft_export.c \
+              srcs/exec/builtins/ft_export_utils.c \
               srcs/exec/builtins/ft_unset.c \
               srcs/exec/builtins/ft_update_pwd.c \
               srcs/exec/redirection/handle_redirection.c \

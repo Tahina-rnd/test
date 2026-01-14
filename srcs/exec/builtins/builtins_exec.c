@@ -6,7 +6,7 @@
 /*   By: miokrako <miokrako@student.42antananari    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/11 23:05:52 by miokrako          #+#    #+#             */
-/*   Updated: 2026/01/12 11:31:03 by miokrako         ###   ########.fr       */
+/*   Updated: 2026/01/14 15:28:58 by miokrako         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -56,7 +56,7 @@ static int	execute_builtin_part1(t_shell *shell, char **args_array)
 	if (ft_strcmp(args_array[0], "cd") == 0)
 		return (builtin_cd(args_array, shell->env));
 	if (ft_strcmp(args_array[0], "pwd") == 0)
-		return (builtin_pwd());
+		return (builtin_pwd(shell));
 	if (ft_strcmp(args_array[0], "export") == 0)
 		return (ft_export(shell, args_array));
 	return (-1);

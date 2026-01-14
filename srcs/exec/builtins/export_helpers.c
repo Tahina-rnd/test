@@ -6,7 +6,7 @@
 /*   By: miokrako <miokrako@student.42antananari    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/11 23:05:52 by miokrako          #+#    #+#             */
-/*   Updated: 2026/01/13 06:26:03 by miokrako         ###   ########.fr       */
+/*   Updated: 2026/01/13 22:31:01 by miokrako         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -78,4 +78,22 @@ int	update_or_add_env(t_shell *shell, char *key, char *value)
 	}
 	exp_add_env_node_back(&shell->env, exp_create_env_node(key, value));
 	return (0);
+}
+
+int	is_valid_identifier_export(const char *str)
+{
+	int	i;
+
+	if (!str || (!ft_isalpha(str[0]) && str[0] != '_'))
+		return (0);
+	i = 1;
+	while (str[i] && str[i] != '=')
+	{
+		if (str[i] == '+' && str[i + 1] == '=')
+			break ;
+		if (!ft_isalnum(str[i]) && str[i] != '_')
+			return (0);
+		i++;
+	}
+	return (1);
 }

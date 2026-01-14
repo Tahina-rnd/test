@@ -5,78 +5,45 @@
 /*                                                    +:+ +:+         +:+     */
 /*   By: tarandri <tarandri@student.42antananarivo. +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/12/26 10:39:50 by tarandri          #+#    #+#             */
-/*   Updated: 2026/01/12 16:37:32 by tarandri         ###   ########.fr       */
+/*   Created: 2025/12/26 07:44:36 by tarandri          #+#    #+#             */
+/*   Updated: 2026/01/13 16:17:11 by tarandri         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../../../includes/parsing.h"
 
-static	int	ft_isspace(int c)
+static int	expand_redir_file(t_redir *redir, t_shell *shell)
 {
-	return (c == ' ' || c == '\t' || c == '\n'
-		|| c == '\v' || c == '\f' || c == '\r');
-}
+	char	*expanded;
 
-static t_arg	*handle_unquoted(t_arg *curr, char *val)
-{
-	int		i;
-	char	buf[2];
-
-	i = 0;
-	buf[1] = '\0';
-	while (val[i])
+	if (ft_strchr(redir->file, '$'))
 	{
-		if (ft_isspace(val[i]))
+		expanded = expand_text(redir->file, shell);
+		if (!expanded || ft_strlen(expanded) == 0 || ft_strchr(expanded, ' '))
 		{
-			if (curr->value != NULL)
-			{
-				curr->next = new_arg_node();
-				curr = curr->next;
-			}
-			while (val[i] && ft_isspace(val[i]))
-				i++;
-			continue ;
+			printf("Minishell: %s: ambiguous redirect\n", redir->file);
+			if (expanded)
+				free(expanded);
+			free(redir->file);
+			redir->file = NULL;
+			return (0);
 		}
-		buf[0] = val[i];
-		append_val(curr, buf);
-		i++;
+		free(redir->file);
+		redir->file = expanded;
 	}
-	return (curr);
+	return (1);
 }
 
-static void	segment_condition(t_segment *seg, t_arg *curr, t_shell *shell)
+int	process_redirs(t_redir *lst, t_shell *shell)
 {
-	char		*exp_val;
+	int	status;
 
-	if (seg->quote == QUOTE_SINGLE)
-		append_val(curr, seg->value);
-	else
+	status = 1;
+	while (lst)
 	{
-		exp_val = expand_text(seg->value, shell);
-		if (seg->quote == QUOTE_DOUBLE)
-			append_val(curr, exp_val);
-		else
-			curr = handle_unquoted(curr, exp_val);
-		free(exp_val);
+		if (!expand_redir_file(lst, shell))
+			status = 0;
+		lst = lst->next;
 	}
-}
-
-t_arg	*expand_arg_to_list(t_arg *arg, t_shell *shell)
-{
-	t_arg		*head;
-	t_arg		*curr;
-	t_segment	*seg;
-
-	head = new_arg_node();
-	curr = head;
-	seg = arg->segments;
-	while (seg)
-	{
-		segment_condition(seg, curr, shell);
-		seg = seg->next;
-	}
-	if (curr->value == NULL && head == curr)
-		return (free(head), NULL);
-	return (head);
+	return (status);
 }

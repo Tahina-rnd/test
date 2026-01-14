@@ -6,7 +6,7 @@
 /*   By: miokrako <miokrako@student.42antananari    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/18 21:31:02 by miokrako          #+#    #+#             */
-/*   Updated: 2026/01/13 12:31:38 by miokrako         ###   ########.fr       */
+/*   Updated: 2026/01/14 16:04:34 by miokrako         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -79,6 +79,45 @@ void	update_pwd_vars(t_env *env, char *old_pwd, char *new_dir)
 	found_oldpwd = 0;
 	handle_oldpwd_update(env, old_pwd, &found_oldpwd);
 	new_pwd = get_new_pwd(old_pwd, new_dir);
+	if (new_pwd)
+	{
+		update_env_var(env, "PWD", new_pwd);
+		free(new_pwd);
+	}
+}
+
+static char	*build_unnormalized_path(char *old_pwd, char *new_dir)
+{
+	char	*temp;
+	char	*result;
+
+	if (!old_pwd || !new_dir)
+		return (NULL);
+
+	// Si chemin absolu, retourner tel quel
+	if (new_dir[0] == '/')
+		return (ft_strdup(new_dir));
+
+	// Sinon, concaténer sans normaliser
+	temp = ft_strjoin(old_pwd, "/");
+	if (!temp)
+		return (NULL);
+	result = ft_strjoin(temp, new_dir);
+	free(temp);
+	return (result);
+}
+
+void	update_pwd_vars_unnormalized(t_env *env, char *old_pwd, char *new_dir)
+{
+	char	*new_pwd;
+	int		found_oldpwd;
+
+	found_oldpwd = 0;
+	handle_oldpwd_update(env, old_pwd, &found_oldpwd);
+
+	// ✅ Construire le chemin SANS normalisation
+	new_pwd = build_unnormalized_path(old_pwd, new_dir);
+
 	if (new_pwd)
 	{
 		update_env_var(env, "PWD", new_pwd);

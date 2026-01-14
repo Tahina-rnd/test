@@ -3,16 +3,18 @@
 /*                                                        :::      ::::::::   */
 /*   exec.h                                             :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: tarandri <tarandri@student.42antananarivo. +#+  +:+       +#+        */
+/*   By: miokrako <miokrako@student.42antananari    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/24 11:01:22 by miokrako          #+#    #+#             */
-/*   Updated: 2026/01/13 12:38:21 by tarandri         ###   ########.fr       */
+/*   Updated: 2026/01/14 16:33:36 by miokrako         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef EXEC_H
 # define EXEC_H
 # define BUFFER_SIZE 1024
+# define MAX_HEREDOCS 16
+
 # include "parsing.h"
 
 void	child_process(t_command *cmd, t_shell *shell, int prev[2], int curr[2]);
@@ -37,7 +39,7 @@ int		execute_builtin(t_command *cmd, t_shell *shell);
 int		check_parent_builtin(char *cmd, t_shell *shell);
 void	exec_builtin_parent(t_command *cmd, t_shell *shell);
 int		builtin_echo(char **args);
-int		builtin_pwd(void);
+int	builtin_pwd(t_shell *shell);
 int		builtin_exit(char **args, t_shell *shell);
 int		builtin_env(t_env *env);
 int		builtin_cd(char **args, t_env *env);
@@ -103,5 +105,10 @@ void	cleanup_exit(t_shell *shell);
 int		is_exit_command(char *input);
 void	handle_command_not_found(char *cmd, char **args, t_shell *shell);
 void	init_oldpwd(t_env **env);
+int		is_valid_identifier_export(const char *str);
+int		handle_export_error(char *arg);
+void	update_pwd_vars_unnormalized(t_env *env, char *old_pwd, char *new_dir);
+void	export_onl(t_shell *shell);
+char	**env_to_array(t_env *env);
 
 #endif
