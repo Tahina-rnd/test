@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   main.c                                             :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: miokrako <miokrako@student.42antananari    +#+  +:+       +#+        */
+/*   By: tarandri <tarandri@student.42antananarivo. +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/15 09:40:43 by tarandri          #+#    #+#             */
-/*   Updated: 2026/01/14 23:44:37 by miokrako         ###   ########.fr       */
+/*   Updated: 2026/01/15 06:28:17 by tarandri         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,21 +23,20 @@ static void	process_input(t_shell *shell)
 		shell->commands = parser(shell->tokens, shell);
 		if (shell->commands)
 		{
-			expander(shell, shell->commands);
-			shell->command_running = 0;
-			executor(shell);
+			expander(shell, shell->commands);			
+			shell->command_running = 1;			
+			executor(shell);			
 			shell->command_running = 0;
 		}
 	}
 }
 
-// main.c
 static void check_interrupted_signal(t_shell *shell)
 {
-    if (g_received_signal == SIGINT)
+	if (g_received_signal == SIGINT)
     {
-        if (shell->command_running)  // ✅ Condition ajoutée
-            shell->last_exit_status = 130;
+        if (shell->last_exit_status != 131)
+            shell->last_exit_status = 130;            
         g_received_signal = 0;
     }
 }
