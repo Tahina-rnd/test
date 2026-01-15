@@ -114,7 +114,7 @@ minishell$>
 
 
 ----------------------
-7-
+7- VITA
 … : tokony chemin relatif : 127 ( message d erreur tsy mety)
 
 miokrako@c1r6s6:~/Music/TAH$ .../
@@ -166,7 +166,7 @@ minishell: ..: command not found
 
 ------------------------
 
-10-
+10- VITA
 tarandri@c1r6s8:~/Documents/minishell$ echo $PATH
 /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 tarandri@c1r6s8:~/Documents/minishell$ unset PATH

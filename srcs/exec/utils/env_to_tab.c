@@ -6,7 +6,7 @@
 /*   By: miokrako <miokrako@student.42antananari    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/24 10:49:05 by miokrako          #+#    #+#             */
-/*   Updated: 2026/01/11 23:25:16 by miokrako         ###   ########.fr       */
+/*   Updated: 2026/01/14 21:58:46 by miokrako         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -56,18 +56,42 @@ static int	fill_env_tab(char **env_tab, t_env *env)
 	return (0);
 }
 
-char	**env_to_tab(t_env *env)
-{
-	char	**env_tab;
-	int		count;
+// char	**env_to_tab(t_env *env)
+// {
+// 	char	**env_tab;
+// 	int		count;
 
-	if (!env)
-		return (NULL);
+// 	if (!env)
+// 		return (NULL);
+// 	count = count_env_vars(env);
+// 	env_tab = allocate_env_tab(count);
+// 	if (!env_tab)
+// 		return (NULL);
+// 	if (fill_env_tab(env_tab, env) == -1)
+// 		return (NULL);
+// 	return (env_tab);
+// }
+char **env_to_tab(t_env *env)
+{
+    char **env_tab;
+    int count;
+
+    // 🆕 Si env est NULL ou vide, retourner un tableau vide
 	count = count_env_vars(env);
-	env_tab = allocate_env_tab(count);
-	if (!env_tab)
-		return (NULL);
-	if (fill_env_tab(env_tab, env) == -1)
-		return (NULL);
-	return (env_tab);
+    if (!env || count == 0)
+    {
+        env_tab = malloc(sizeof(char *) * 1);
+        if (!env_tab)
+            return (NULL);
+        env_tab[0] = NULL;
+        return (env_tab);  // ✅ Tableau vide valide
+    }
+    env_tab = allocate_env_tab(count);
+    if (!env_tab)
+        return (NULL);
+
+    if (fill_env_tab(env_tab, env) == -1)
+        return (NULL);
+
+    return (env_tab);
 }

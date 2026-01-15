@@ -6,7 +6,7 @@
 /*   By: miokrako <miokrako@student.42antananari    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/15 09:40:43 by tarandri          #+#    #+#             */
-/*   Updated: 2026/01/13 16:48:18 by miokrako         ###   ########.fr       */
+/*   Updated: 2026/01/14 23:44:37 by miokrako         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,18 +24,22 @@ static void	process_input(t_shell *shell)
 		if (shell->commands)
 		{
 			expander(shell, shell->commands);
+			shell->command_running = 0;
 			executor(shell);
+			shell->command_running = 0;
 		}
 	}
 }
 
-static void	check_interrupted_signal(t_shell *shell)
+// main.c
+static void check_interrupted_signal(t_shell *shell)
 {
-	if (g_received_signal == SIGINT)
-	{
-		shell->last_exit_status = 130;
-		g_received_signal = 0;
-	}
+    if (g_received_signal == SIGINT)
+    {
+        if (shell->command_running)  // ✅ Condition ajoutée
+            shell->last_exit_status = 130;
+        g_received_signal = 0;
+    }
 }
 
 static void	minishell_loop(t_shell *shell)
