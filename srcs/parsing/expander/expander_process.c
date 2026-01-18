@@ -6,7 +6,7 @@
 /*   By: tarandri <tarandri@student.42antananarivo. +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/26 10:39:50 by tarandri          #+#    #+#             */
-/*   Updated: 2026/01/13 16:21:31 by tarandri         ###   ########.fr       */
+/*   Updated: 2026/01/15 10:45:22 by tarandri         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -83,7 +83,12 @@ char	*expand_text(char *str, t_shell *shell)
 	while (str[i])
 	{
 		if (str[i] == '$' && str[i + 1])
-			res = append_var(res, str, &i, shell);
+		{
+			if (ft_isdigit(str[i + 1]))
+				i += 2;
+			else
+				res = append_var(res, str, &i, shell);
+		}
 		else
 		{
 			res = append_char(res, str[i]);

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ft_error.c                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: miokrako <miokrako@student.42antananari    +#+  +:+       +#+        */
+/*   By: tarandri <tarandri@student.42antananarivo. +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/12 22:05:09 by tarandri          #+#    #+#             */
-/*   Updated: 2026/01/13 22:33:18 by miokrako         ###   ########.fr       */
+/*   Updated: 2026/01/15 12:05:42 by tarandri         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 

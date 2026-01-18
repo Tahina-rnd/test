@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   signal.c                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: miokrako <miokrako@student.42antananari    +#+  +:+       +#+        */
+/*   By: tarandri <tarandri@student.42antananarivo. +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/04 15:17:38 by miokrako          #+#    #+#             */
-/*   Updated: 2026/01/13 14:41:59 by miokrako         ###   ########.fr       */
+/*   Updated: 2026/01/15 10:36:28 by tarandri         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,10 +25,6 @@ void	setup_prompt_signal(void)
 	sa_quit.sa_flags = 0;
 	sa_quit.sa_handler = SIG_IGN;
 	sigaction(SIGQUIT, &sa_quit, NULL);
-	sigemptyset(&sa_quit.sa_mask);
-	sa_quit.sa_flags = 0;
-	sa_quit.sa_handler = SIG_IGN;
-	sigaction(SIGTSTP, &sa_quit, NULL);
 }
 
 void	setup_exec_signals(void)

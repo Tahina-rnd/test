@@ -6,7 +6,7 @@
 /*   By: miokrako <miokrako@student.42antananari    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/12 08:05:16 by miokrako          #+#    #+#             */
-/*   Updated: 2026/01/12 08:08:46 by miokrako         ###   ########.fr       */
+/*   Updated: 2026/01/16 15:09:08 by miokrako         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -49,4 +49,23 @@ int	open_output_file(t_redir *redir)
 		return (-1);
 	}
 	return (fd);
+}
+
+int	check_redir(t_command *cmd, t_redir *last_hd, t_redir *last_in)
+{
+	int	ret;
+
+	ret = 0;
+	if (last_hd && last_in)
+	{
+		if (last_hd->index > last_in->index)
+			ret = handle_input_redirections(cmd->heredoc);
+		else
+			ret = handle_input_redirections(cmd->input_redirection);
+	}
+	else if (last_hd)
+		ret = handle_input_redirections(cmd->heredoc);
+	else if (last_in)
+		ret = handle_input_redirections(cmd->input_redirection);
+	return (ret);
 }

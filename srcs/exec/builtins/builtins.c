@@ -6,7 +6,7 @@
 /*   By: miokrako <miokrako@student.42antananari    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/17 21:32:09 by miokrako          #+#    #+#             */
-/*   Updated: 2026/01/13 14:09:33 by miokrako         ###   ########.fr       */
+/*   Updated: 2026/01/16 20:53:10 by miokrako         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -54,4 +54,18 @@ int	is_builtin(char *cmd)
 int	check_parent_builtin(char *cmd, t_shell *shell)
 {
 	return (is_parent_builtin(cmd, shell));
+}
+
+char	*get_old_pwd(t_env *env)
+{
+	char	*old_pwd;
+	char	*cwd;
+
+	old_pwd = get_env_value(env, "PWD");
+	if (old_pwd && old_pwd[0] != '\0')
+		return (ft_strdup(old_pwd));
+	cwd = getcwd(NULL, 0);
+	if (cwd)
+		return (cwd);
+	return (NULL);
 }

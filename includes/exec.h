@@ -6,7 +6,7 @@
 /*   By: miokrako <miokrako@student.42antananari    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/24 11:01:22 by miokrako          #+#    #+#             */
-/*   Updated: 2026/01/14 16:33:36 by miokrako         ###   ########.fr       */
+/*   Updated: 2026/01/16 21:13:35 by miokrako         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,6 +14,7 @@
 # define EXEC_H
 # define BUFFER_SIZE 1024
 # define MAX_HEREDOCS 16
+# define PATH_MAX 4096
 
 # include "parsing.h"
 
@@ -39,7 +40,7 @@ int		execute_builtin(t_command *cmd, t_shell *shell);
 int		check_parent_builtin(char *cmd, t_shell *shell);
 void	exec_builtin_parent(t_command *cmd, t_shell *shell);
 int		builtin_echo(char **args);
-int	builtin_pwd(t_shell *shell);
+int		builtin_pwd(t_shell *shell);
 int		builtin_exit(char **args, t_shell *shell);
 int		builtin_env(t_env *env);
 int		builtin_cd(char **args, t_env *env);
@@ -110,5 +111,20 @@ int		handle_export_error(char *arg);
 void	update_pwd_vars_unnormalized(t_env *env, char *old_pwd, char *new_dir);
 void	export_onl(t_shell *shell);
 char	**env_to_array(t_env *env);
-
+char	*get_new_pwd(char *old_pwd, char *new_dir);
+void	handle_oldpwd_update(t_env *env, char *old_pwd, int *found);
+char	*get_new_pwd_absolute(char *new_dir);
+char	*get_new_pwd_relative(char *old_pwd, char *new_dir);
+char	*try_cwd_path(char *cmd);
+void	check_dot_cases(char *cmd, t_shell *shell, char **args_array);
+char	*get_old_pwd(t_env *env);
+void	update_pwd_after_cd(t_env *env, char *old_pwd);
+int		handle_input_redirections(t_redir *input_list);
+int		check_redir(t_command *cmd, t_redir *last_hd, t_redir *last_in);
+int		handle_chdir_failure(char *dir, char *old_pwd, t_env *env);
+char	*resolve_dotdot_logical(char *pwd);
+char	*get_target_directory(char **args, t_env *env);
+char	*save_current_pwd(t_env *env);
+int		handle_append_export(t_shell *shell, char *key, char *value);
+int		is_append_mode(const char *arg);
 #endif

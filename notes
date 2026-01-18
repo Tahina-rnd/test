@@ -1,195 +1,242 @@
-1 - VITA
-Analysez ceci, detaillez le probleme et la solution a faire
-
-bash-5.1$ ls > /dev/pts/2 | < assag
-bash: assag: No such file or directory
-includes  libft  Makefile  minishell  notes  rl.supp  srcs
-bash-5.1$ echo $?
+1- VITA testena sisa
+miokrako@c1r7s1:~/Music/br$ bash | wc -l
+miokrako@c1r7s1:~/Music/br$
+miokrako@c1r7s1:~/Music/br$
+miokrako@c1r7s1:~/Music/br$
+miokrako@c1r7s1:~/Music/br$
+miokrako@c1r7s1:~/Music/br$
+miokrako@c1r7s1:~/Music/br$
+miokrako@c1r7s1:~/Music/br$
+exit
 0
-bash-5.1$
+
+miokrako@c1r7s1:~/Music/br$ ./minishell | wc -l
+10
+miokrako@c1r7s1:~/Music/br$ ./minishell | wc -l
+minishell: ghello: command not found
+11
+miokrako@c1r7s1:~/Music/br$
 
 
-minishell$> ls > /dev/pts/2 | < assag
-minishell: assag: No such file or directory
-includes  libft  Makefile  minishell  notes  rl.supp  srcs
-minishell$> echo $?
-1
+2- VITA testena sisa
+minishell$> cat < sdgjk
+minishell: sdgjk: No such file or directory
+boucle infinie ne renvoie pas de prompt
+
+miokrako@c1r7s1:~/Music/br$ cat < fgjhfjkd
+bash: fgjhfjkd: No such file or directory
+miokrako@c1r7s1:~/Music/br$
+
+3- VITA testena sisa
+bash:
+miokrako@c1r7s1:~/Music/br$ export eval
+miokrako@c1r7s1:~/Music/br$ export | grep eval
+declare -x eval
+miokrako@c1r7s1:~/Music/br$ export eval=42
+miokrako@c1r7s1:~/Music/br$ export | grep eval
+declare -x eval="42"
+miokrako@c1r7s1:~/Music/br$ export eval
+miokrako@c1r7s1:~/Music/br$ export | grep eval
+declare -x eval="42"
+miokrako@c1r7s1:~/Music/br$
+
+minishell$> export eval
+minishell$> export | grep eval
+declare -x eval
+minishell$> export eval=42
+minishell$> export | grep eval
+declare -x eval="42"
+minishell$> export eval
+minishell$> export | grep eval
+declare -x eval
 minishell$>
 
----------
-2- VITA
+ETOO
+bash-5.2$ export eval
+bash-5.2$ export | grep eval
+export eval
+bash-5.2$ env | grep eval
+bash-5.2$ export eval=
+bash-5.2$ export | grep eval
+export eval=""
+bash-5.2$ env | grep eval
+eval=
+bash-5.2$ export eval=42
+bash-5.2$ env | grep eval
+eval=42
+bash-5.2$ export | grep eval
+export eval="42"
+bash-5.2$ export eval=
+bash-5.2$ env | grep eval
+eval=
+bash-5.2$ export | grep eval
+export eval=""
+bash-5.2$ export eval=1
+bash-5.2$ env | grep eval
+eval=1
+bash-5.2$ export | grep eval
+export eval="1"
+bash-5.2$ export eval
+bash-5.2$ env | grep eval
+eval=1
+bash-5.2$ export | grep eval
+export eval="1"
+bash-5.2$
 
-minishell$> mkdir a
-minishell$> mkdir a/b
+minishell$> export eval
+minishell$> export | grep eval
+declare -x eval
+minishell$> env | grep eval
+minishell$> export eval=
+minishell$> export | grep eval
+declare -x eval=""
+minishell$> env | grep eval
+eval=
+minishell$> export eval=42
+minishell$> env | grep eval
+eval=42
+minishell$> export eval=42
+minishell$> env | grep eval
+eval=42
+minishell$> export | grep eval
+declare -x eval="42"
+minishell$> export eval=
+minishell$> env | grep eval
+eval=
+minishell$> export | grep eval
+declare -x eval=""
+minishell$> export eval=1
+minishell$> env | grep eval
+eval=1
+minishell$> export | grep eval
+declare -x eval="1"
+minishell$> export eval
+minishell$> env | grep eval
+eval=1
+minishell$> export | grep eval
+declare -x eval="1"
+minishell$> ^C
+minishell$>
+
+
+
+
+
+4- VITA testena sisa
+minishell$> cat < fsjfgk > que
+minishell: fsjfgk: No such file or directory
+
+^C
+minishell$> ls
+includes  libft  Makefile  minishell  notes  que  srcs
+minishell$>
+fichier que cree et ne renvoie pas le prompt lors de cat < fsjfgk > que
+
+miokrako@c1r7s1:~/Music/br$ cat < fsjfgk > qui
+bash: fsjfgk: No such file or directory
+miokrako@c1r7s1:~/Music/br$ ls
+includes  libft  Makefile  minishell  notes  srcs
+miokrako@c1r7s1:~/Music/br$
+
+bash ne cree pas le fichier 'qui'
+
+5- VITA testena sisa
+sudo
+minishell$> sudo
+minishell: sudo: command not found
+minishell$> /bin/sudo
+minishell: /bin/sudo: Permission denied
+minishell$>
+
+miokrako@c1r7s1:~/Music/br$ sudo
+bash: /usr/bin/sudo: Permission denied
+miokrako@c1r7s1:~/Music/br$ /bin/sudo
+bash: /bin/sudo: Permission denied
+miokrako@c1r7s1:~/Music/br$
+
+6- VITA testena sisa misy leaks
+
+test 1:
+minishell$> mkdir a a/b
 minishell$> cd a/b
-minishell$> pwd
-/home/miokrako/Music/TAH/a/b
-minishell$> rm -rf ../../a
-minishell$> pwd
-minishell: pwd: No such file or directory
+minishell$> rm -r ../../a
 minishell$> cd ..
+minishell: cd: ..: No such file or directory
 minishell$> pwd
-minishell: pwd: No such file or directory
+/home/mioky/Musique/tapaka/a/b
 minishell$> cd ..
+minishell: cd: ..: No such file or directory
 minishell$> pwd
-/home/miokrako/Music/TAH
+/home/mioky/Musique/tapaka/a/b
+minishell$> cd ..
+minishell: cd: ..: No such file or directory
+minishell$> pwd
+/home/mioky/Musique/tapaka/a/b
+minishell$> cd ..
+minishell: cd: ..: No such file or directory
+minishell$> pwd
+/home/mioky/Musique/tapaka/a/b
 minishell$>
+ne sort jamais
 
-miokrako@c1r6s6:~/Music/TAH$ mkdir a
-miokrako@c1r6s6:~/Music/TAH$ mkdir a/b
-miokrako@c1r6s6:~/Music/TAH$ cd a/b
-miokrako@c1r6s6:~/Music/TAH/a/b$ pwd
-/home/miokrako/Music/TAH/a/b
-miokrako@c1r6s6:~/Music/TAH/a/b$ rm -rf ../../a
-miokrako@c1r6s6:~/Music/TAH/a/b$ pwd
-/home/miokrako/Music/TAH/a/b
-miokrako@c1r6s6:~/Music/TAH/a/b$ cd ..
+bash-5.2$ mkdir a a/b
+bash-5.2$ cd a/b
+bash-5.2$ rm -r ../../a
+bash-5.2$ cd ..
+bash: cd: ..: Aucun fichier ou dossier de ce nom
+bash-5.2$ pwd
+pwd : erreur de détermination du répertoire actuel : getcwd : ne peut accéder aux répertoires parents : Aucun fichier ou dossier de ce nom
+bash-5.2$ cd ..
+chdir : erreur de détermination du répertoire actuel : getcwd : ne peut accéder aux répertoires parents : Aucun fichier ou dossier de ce nom
+bash-5.2$ pwd
+pwd : erreur de détermination du répertoire actuel : getcwd : ne peut accéder aux répertoires parents : Aucun fichier ou dossier de ce nom
+bash-5.2$ cd ..
+chdir : erreur de détermination du répertoire actuel : getcwd : ne peut accéder aux répertoires parents : Aucun fichier ou dossier de ce nom
+bash-5.2$ pwd
+/home/mioky/Musique/tapaka
+bash-5.2$
+
+
+
+test 2 avec unset
+
+minishell$> mkdir a a/b
+minishell$> cd a/b
+minishell$> rm -r ../../a
+minishell$> unset PWD OLDPWD
+minishell$> pwd
+pwd: error retrieving current directory: getcwd: cannot access parent directories: No such file or directory
+minishell$> cd ..
 cd: error retrieving current directory: getcwd: cannot access parent directories: No such file or directory
-miokrako@c1r6s6:~/Music/TAH/a/b/..$ pwd
-/home/miokrako/Music/TAH/a/b/..
-miokrako@c1r6s6:~/Music/TAH/a/b/..$ cd ..
-miokrako@c1r6s6:~/Music/TAH$ pwd
-/home/miokrako/Music/TAH
-miokrako@c1r6s6:~/Music/TAH$
-
-
-
-tokony tazominy ny oldpwd dia concatenena amin iny ny cd manaraka.
-
---------------
-
-3- VITA
-minishell$> << end < rl.supp cat -e
-> popo
-> pepe
-> end
-popo$
-pepe$
-minishell$>
-
-miokrako@c1r6s6:~/Music/TAH$ << end < rl.supp cat -e
-> popo
-> pepe
-> end
-{$
-   ignore_readlines_errors$
-   Memcheck:Leak$
-   ...$
-   obj:*/libreadline.so.*$
-}$
-miokrako@c1r6s6:~/Music/TAH$
-
-
---------------------
-4-VITA
-export >>> alphabetical order
-
---------------------
-5- VITA
-tarandri@c1r6s8:~/Documents/minishell$ << 1 << 2 << 3 << 4 << 5 << 6 << 7 << 8 << 9 << 10 << 11 << 12 << 13 << 14 << 15 << 16 << 17 ls
-bash: maximum here-document count exceeded
-
-----------------------
-6- VITA
-<< a cat : creer file isakn ny heredoc iray
-
-minishell$> << a cat
-> p
-> o
-> p
-> a
-minishell: /tmp/.heredoc_a_0: No such file or directory
-minishell$>
-
-minishell$> << a cat
-> i
-> t
-> p
-> a
-i
-t
-p
+minishell$> pwd
+pwd: error retrieving current directory: getcwd: cannot access parent directories: No such file or directory
+minishell$> cd ..
+minishell$> pwd
+/home/mioky/Musique/Mioky
 minishell$>
 
 
-
-----------------------
-7- VITA
-… : tokony chemin relatif : 127 ( message d erreur tsy mety)
-
-miokrako@c1r6s6:~/Music/TAH$ .../
-bash: .../: No such file or directory
-miokrako@c1r6s6:~/Music/TAH$ echo $?
-127
-miokrako@c1r6s6:~/Music/TAH$ .../khk
-bash: .../khk: No such file or directory
-miokrako@c1r6s6:~/Music/TAH$
-
-minishell$> .../
-minishell: .../: command not found
-minishell$> echo $?
-127
-minishell$> .../ygk
-minishell: .../ygk: command not found
-minishell$>
-
-
-----------------------
-8-VITA
-Dia signal raha cat tapahana sigquit dia aveo atao ctrl+c dia tokony isy 131 foana ny echo $?
-
-miokrako@c1r6s6:~/Music/TAH$ cat
-^\Quit (core dumped)
-miokrako@c1r6s6:~/Music/TAH$ ^C
-miokrako@c1r6s6:~/Music/TAH$ ^C
-miokrako@c1r6s6:~/Music/TAH$ ^C
-miokrako@c1r6s6:~/Music/TAH$ echo $?
-131
-miokrako@c1r6s6:~/Music/TAH$
-
-
-minishell$> cat
-^\Quit (core dumped)
-minishell$> ^C
-minishell$> ^C
-minishell$> ^C
-minishell$> echo $?
-130
-minishell$>
-
-
------------------------
-9-VITA
-minishell$> .
-minishell: ..: command not found
-> tokony point iray
-
-------------------------
-
-10- VITA
-tarandri@c1r6s8:~/Documents/minishell$ echo $PATH
-/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
-tarandri@c1r6s8:~/Documents/minishell$ unset PATH
-tarandri@c1r6s8:~/Documents/minishell$ minishell
-minishell$>
-
-> raha ts misy PATH dia mijery ao amin ny dossier courant
-
-miokrako@c1r6s6:~/Music/TAH$ minishell
-minishell: command not found
-miokrako@c1r6s6:~/Music/TAH$ unset PATH
-miokrako@c1r6s6:~/Music/TAH$ minishell
-minishell$>
-
-minishell$> minishell
-minishell: minishell: command not found
-minishell$> unset PATH
-minishell$> minishell
-minishell: minishell: command not found
-minishell$>
-
-
--------------------------
+bash-5.2$ mkdir a a/b
+bash-5.2$ cd a/b
+bash-5.2$ rm -r ../../a
+bash-5.2$ unset PWD OLDPWD
+bash-5.2$ pwd
+pwd : erreur de détermination du répertoire actuel : getcwd : ne peut accéder aux répertoires parents : Aucun fichier ou dossier de ce nom
+bash-5.2$ cd ..
+chdir : erreur de détermination du répertoire actuel : getcwd : ne peut accéder aux répertoires parents : Aucun fichier ou dossier de ce nom
+bash-5.2$ pwd
+pwd : erreur de détermination du répertoire actuel : getcwd : ne peut accéder aux répertoires parents : Aucun fichier ou dossier de ce nom
+bash-5.2$ cd ..
+chdir : erreur de détermination du répertoire actuel : getcwd : ne peut accéder aux répertoires parents : Aucun fichier ou dossier de ce nom
+bash-5.2$ pwd
+/home/mioky/Musique/Mioky
+bash-5.2$
 
 
 
+
+
+7-
+expander_process2.c
+misy error mampiasa printf, soloina ft_putstr_fd
+static int	expand_redir_file(t_redir *redir, t_shell *shell)

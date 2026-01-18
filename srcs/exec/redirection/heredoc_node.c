@@ -6,7 +6,7 @@
 /*   By: miokrako <miokrako@student.42antananari    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/11 16:43:56 by miokrako          #+#    #+#             */
-/*   Updated: 2026/01/14 16:39:54 by miokrako         ###   ########.fr       */
+/*   Updated: 2026/01/15 12:02:10 by miokrako         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -66,58 +66,34 @@ int	process_single_heredoc_node(t_redir *heredoc_node, t_shell *shell,
 	return (0);
 }
 
-// int	process_cmd_heredocs(t_command *cmd, t_shell *shell)
-// {
-// 	t_redir	*current;
-// 	int		result;
-// 	int		index;
-
-// 	if (!cmd || !cmd->heredoc)
-// 		return (0);
-// 	current = cmd->heredoc;
-// 	index = 0;
-// 	while (current)
-// 	{
-// 		result = process_single_heredoc_node(current, shell, index);
-// 		if (result != 0)
-// 			return (result);
-// 		current = current->next;
-// 		index++;
-// 	}
-// 	return (0);
-// }
-
-
-int	process_cmd_heredocs(t_command *cmd, t_shell *shell)
+static void	heredoc_max(t_redir *current, t_shell *shell)
 {
-	t_redir	*current;
-	int		result;
-	int		index;
 	int		count;
 
-	if (!cmd || !cmd->heredoc)
-		return (0);
-
-	// Compter le nombre de heredocs
-	current = cmd->heredoc;
 	count = 0;
 	while (current)
 	{
 		count++;
 		current = current->next;
 	}
-
-	// Vérifier la limite
 	if (count > MAX_HEREDOCS)
 	{
 		ft_putstr_fd("minishell: maximum here-document count exceeded\n", 2);
-		// shell->last_exit_status = 2;
-		// return (1);
 		cleanup_child(shell);
 		exit (2);
 	}
+}
 
-	// Traitement normal
+int	process_cmd_heredocs(t_command *cmd, t_shell *shell)
+{
+	t_redir	*current;
+	int		result;
+	int		index;
+
+	if (!cmd || !cmd->heredoc)
+		return (0);
+	current = cmd->heredoc;
+	heredoc_max(current, shell);
 	current = cmd->heredoc;
 	index = 0;
 	while (current)

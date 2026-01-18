@@ -6,41 +6,51 @@
 /*   By: tarandri <tarandri@student.42antananarivo. +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/04 22:37:54 by tarandri          #+#    #+#             */
-/*   Updated: 2026/01/14 19:48:32 by tarandri         ###   ########.fr       */
+/*   Updated: 2026/01/18 17:50:23 by tarandri         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../../../includes/exec.h"
 
-static int	is_append_mode(const char *arg)
+static void	parse_export_components(char *arg, char **key,
+	char **value, int *append)
 {
-	int	i;
-
-	i = 0;
-	while (arg[i] && arg[i] != '=')
-		i++;
-	if (i > 0 && arg[i - 1] == '+' && arg[i] == '=')
-		return (1);
-	return (0);
+	*append = is_append_mode(arg);
+	*key = extract_key(arg);
+	*value = extract_value(arg);
 }
 
-static int	handle_append_export(t_shell *shell, char *key, char *value)
+static void	update_existing_var(t_env *exist, char *value,
+	int append, t_shell *shell)
 {
-	char	*old_val;
-	char	*new_val;
-
-	if (key && key[ft_strlen(key) - 1] == '+')
-		key[ft_strlen(key) - 1] = '\0';
-	old_val = get_env_value(shell->env, key);
-	if (old_val)
+	exist->exported = 1;
+	if (value != NULL)
 	{
-		new_val = ft_strjoin(old_val, value);
-		update_or_add_env(shell, key, new_val);
-		free(new_val);
+		if (append)
+			handle_append_export(shell, exist->key, value);
+		else
+		{
+			free(exist->value);
+			exist->value = ft_strdup(value);
+		}
 	}
-	else
-		update_or_add_env(shell, key, value);
-	free(value);
+}
+
+static int	find_and_update_var(t_shell *shell, char *key,
+	char *value, int append)
+{
+	t_env	*exist;
+
+	exist = shell->env;
+	while (exist)
+	{
+		if (ft_strcmp(exist->key, key) == 0)
+		{
+			update_existing_var(exist, value, append, shell);
+			return (1);
+		}
+		exist = exist->next;
+	}
 	return (0);
 }
 
@@ -50,19 +60,21 @@ static int	process_export_arg(t_shell *shell, char *arg)
 	char	*value;
 	int		append;
 
-	append = is_append_mode(arg);
-	key = extract_key(arg);
-	value = extract_value(arg);
+	parse_export_components(arg, &key, &value, &append);
+	if (find_and_update_var(shell, key, value, append))
+	{
+		free(key);
+		if (value)
+			free(value);
+		return (0);
+	}
 	if (append && value)
 		handle_append_export(shell, key, value);
-	else if (value)
-	{
-		update_or_add_env(shell, key, value);
-		free(value);
-	}
 	else
-		update_or_add_env(shell, key, NULL);
+		update_or_add_env(shell, key, value);
 	free(key);
+	if (value)
+		free(value);
 	return (0);
 }
 

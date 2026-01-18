@@ -6,7 +6,7 @@
 /*   By: miokrako <miokrako@student.42antananari    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/11 16:43:56 by miokrako          #+#    #+#             */
-/*   Updated: 2026/01/14 16:51:30 by miokrako         ###   ########.fr       */
+/*   Updated: 2026/01/15 12:02:12 by miokrako         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -56,39 +56,8 @@ int	parent_wait_heredoc(pid_t pid, t_shell *shell)
 	return (0);
 }
 
-// char	*generate_tmpfile_name(char *delimiter, int index)
-// {
-// 	char	*index_str;
-// 	char	*tmp1;
-// 	char	*tmp2;
-// 	char	*result;
-
-// 	index_str = ft_itoa(index);
-// 	if (!index_str)
-// 		return (NULL);
-// 	tmp1 = ft_strjoin("/tmp/.heredoc_", delimiter);
-// 	if (!tmp1)
-// 	{
-// 		free(index_str);
-// 		return (NULL);
-// 	}
-// 	tmp2 = ft_strjoin(tmp1, "_");
-// 	free(tmp1);
-// 	if (!tmp2)
-// 	{
-// 		free(index_str);
-// 		return (NULL);
-// 	}
-// 	result = ft_strjoin(tmp2, index_str);
-// 	free(tmp2);
-// 	free(index_str);
-// 	return (result);
-// }
-
-
-char	*generate_tmpfile_name(char *delimiter, int index)
+static char	*generate_tmpfile_base(char *delimiter)
 {
-	char	*index_str;
 	char	*pid_str;
 	char	*tmp;
 	char	*result;
@@ -96,33 +65,37 @@ char	*generate_tmpfile_name(char *delimiter, int index)
 	pid_str = ft_itoa(getpid());
 	if (!pid_str)
 		return (NULL);
-	index_str = ft_itoa(index);
-	if (!index_str)
-		return (free(pid_str), NULL);
-
-	// Construire: /tmp/.heredoc_PID_DELIM_INDEX
 	tmp = ft_strjoin("/tmp/.heredoc_", pid_str);
 	free(pid_str);
 	if (!tmp)
-		return (free(index_str), NULL);
-
+		return (NULL);
 	result = ft_strjoin(tmp, "_");
 	free(tmp);
 	if (!result)
-		return (free(index_str), NULL);
-
+		return (NULL);
 	tmp = ft_strjoin(result, delimiter);
 	free(result);
 	if (!tmp)
-		return (free(index_str), NULL);
-
+		return (NULL);
 	result = ft_strjoin(tmp, "_");
 	free(tmp);
-	if (!result)
-		return (free(index_str), NULL);
+	return (result);
+}
 
-	tmp = ft_strjoin(result, index_str);
-	free(result);
+char	*generate_tmpfile_name(char *delimiter, int index)
+{
+	char	*index_str;
+	char	*base;
+	char	*result;
+
+	base = generate_tmpfile_base(delimiter);
+	if (!base)
+		return (NULL);
+	index_str = ft_itoa(index);
+	if (!index_str)
+		return (free(base), NULL);
+	result = ft_strjoin(base, index_str);
+	free(base);
 	free(index_str);
-	return (tmp);
+	return (result);
 }

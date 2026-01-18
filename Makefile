@@ -32,6 +32,7 @@ SRCS_EXEC    = srcs/exec/executor/exec.c \
               srcs/exec/executor/exec_child.c \
               srcs/exec/executor/exec_helper.c \
               srcs/exec/executor/exec_cmd.c \
+              srcs/exec/executor/try_paths.c \
               srcs/exec/executor/pipe_and_fork.c \
               srcs/exec/executor/wait_children.c \
               srcs/exec/builtins/builtins.c \
@@ -42,11 +43,14 @@ SRCS_EXEC    = srcs/exec/executor/exec.c \
               srcs/exec/builtins/ft_builtin_cd.c \
               srcs/exec/builtins/ft_builtins.c \
               srcs/exec/builtins/ft_cd_utils.c \
+              srcs/exec/builtins/ft_cd_utils2.c \
               srcs/exec/builtins/ft_exit.c \
               srcs/exec/builtins/ft_export.c \
               srcs/exec/builtins/ft_export_utils.c \
+              srcs/exec/builtins/ft_export_utils2.c \
               srcs/exec/builtins/ft_unset.c \
               srcs/exec/builtins/ft_update_pwd.c \
+              srcs/exec/builtins/ft_pwd_utils.c \
               srcs/exec/redirection/handle_redirection.c \
               srcs/exec/redirection/heredoc_content.c \
               srcs/exec/redirection/heredoc_create.c \
@@ -66,7 +70,7 @@ SRCS_EXEC    = srcs/exec/executor/exec.c \
               srcs/exec/utils/utils_free.c \
               srcs/exec/utils/ft_error.c \
               srcs/exec/signal/signal.c \
-              srcs/exec/signal/handler.c \
+              srcs/exec/signal/handler.c 
 
 SRCS        = $(SRCS_MAIN) $(SRCS_PARSING) $(SRCS_ENV) $(SRCS_EXEC)
 OBJS        = $(SRCS:.c=.o)

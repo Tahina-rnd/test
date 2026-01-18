@@ -6,109 +6,78 @@
 /*   By: miokrako <miokrako@student.42antananari    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/18 21:31:02 by miokrako          #+#    #+#             */
-/*   Updated: 2026/01/14 16:03:05 by miokrako         ###   ########.fr       */
+/*   Updated: 2026/01/16 21:03:22 by miokrako         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../../../includes/exec.h"
 
-static int	cd_error_no_home(char *old_pwd)
+static char	*make_absolute_path(char *old_pwd, char *dir)
 {
-	ft_putstr_fd("minishell: cd: HOME not set\n", 2);
-	free(old_pwd);
-	return (1);
-}
+	char	*temp;
+	char	*result;
 
-static int	cd_error_chdir(char *dir, char *old_pwd)
-{
-	ft_putstr_fd("minishell: cd: ", 2);
-	ft_putstr_fd(dir, 2);
-	ft_putstr_fd(": ", 2);
-	ft_putstr_fd(strerror(errno), 2);
-	ft_putstr_fd("\n", 2);
-	free(old_pwd);
-	return (1);
-}
-
-static char	*get_old_pwd(t_env *env)
-{
-	char	*old_pwd;
-
-	old_pwd = get_env_value(env, "PWD");
-	if (!old_pwd)
-		old_pwd = getcwd(NULL, 0);
-	else
-		old_pwd = ft_strdup(old_pwd);
-	if (!old_pwd)
-	{
-		perror("minishell: cd: getcwd");
+	if (!old_pwd || !dir)
 		return (NULL);
-	}
-	return (old_pwd);
+	if (dir[0] == '/')
+		return (ft_strdup(dir));
+	if (ft_strcmp(dir, "..") == 0)
+		return (resolve_dotdot_logical(old_pwd));
+	temp = ft_strjoin(old_pwd, "/");
+	if (!temp)
+		return (NULL);
+	result = ft_strjoin(temp, dir);
+	free(temp);
+	return (result);
 }
 
-// int	builtin_cd(char **args, t_env *env)
-// {
-// 	char	*dir;
-// 	char	*old_pwd;
+static int	try_logical_cd(char *old_pwd, char *dir, t_env *env)
+{
+	char	*target_path;
+	int		chdir_ret;
 
-// 	old_pwd = get_old_pwd(env);
-// 	if (!old_pwd)
-// 		return (1);
-// 	if (!args || !args[1])
-// 		dir = get_env_value(env, "HOME");
-// 	else
-// 		dir = args[1];
-// 	if (!dir)
-// 		return (cd_error_no_home(old_pwd));
-// 	if (chdir(dir) != 0)
-// 		return (cd_error_chdir(dir, old_pwd));
-// 	update_pwd_vars(env, old_pwd, dir);
-// 	free(old_pwd);
-// 	return (0);
-// }
+	if (!old_pwd || dir[0] == '/')
+		return (-1);
+	target_path = make_absolute_path(old_pwd, dir);
+	if (!target_path)
+		return (-1);
+	chdir_ret = chdir(target_path);
+	if (chdir_ret == 0)
+	{
+		update_pwd_vars(env, old_pwd, target_path);
+		free(target_path);
+		return (0);
+	}
+	free(target_path);
+	return (-1);
+}
 
+static int	execute_cd(char *dir, char *old_pwd_copy, t_env *env)
+{
+	int	ret;
+
+	ret = try_logical_cd(old_pwd_copy, dir, env);
+	if (ret == 0)
+	{
+		free(old_pwd_copy);
+		return (0);
+	}
+	if (chdir(dir) != 0)
+		return (handle_chdir_failure(dir, old_pwd_copy, env));
+	update_pwd_after_cd(env, old_pwd_copy);
+	return (0);
+}
 
 int	builtin_cd(char **args, t_env *env)
 {
 	char	*dir;
-	char	*old_pwd;
-	char	*test_cwd;
+	char	*old_pwd_copy;
 
-	old_pwd = get_old_pwd(env);
-	if (!old_pwd)
-		return (1);
-
-	if (!args || !args[1])
-		dir = get_env_value(env, "HOME");
-	else
-		dir = args[1];
-
+	dir = get_target_directory(args, env);
 	if (!dir)
-		return (cd_error_no_home(old_pwd));
-
-	// ✅ ÉTAPE 1 : Essayer chdir()
-	if (chdir(dir) != 0)
-		return (cd_error_chdir(dir, old_pwd));
-
-	// ✅ ÉTAPE 2 : Vérifier si getcwd() fonctionne
-	test_cwd = getcwd(NULL, 0);
-	if (!test_cwd)
-	{
-		// ⚠️ getcwd() a échoué → Le répertoire parent n'existe plus
-		ft_putstr_fd("cd: error retrieving current directory: ", 2);
-		ft_putstr_fd("getcwd: cannot access parent directories: ", 2);
-		ft_putstr_fd("No such file or directory\n", 2);
-
-		// ✅ Mettre à jour PWD avec le chemin NON NORMALISÉ
-		update_pwd_vars_unnormalized(env, old_pwd, dir);
-		free(old_pwd);
-		return (0);  // ⚠️ Retourne 0 (comme bash)
-	}
-
-	// ✅ ÉTAPE 3 : getcwd() a réussi → Tout est normal
-	free(test_cwd);
-	update_pwd_vars(env, old_pwd, dir);
-	free(old_pwd);
-	return (0);
+		return (1);
+	old_pwd_copy = save_current_pwd(env);
+	if (!old_pwd_copy)
+		return (1);
+	return (execute_cd(dir, old_pwd_copy, env));
 }

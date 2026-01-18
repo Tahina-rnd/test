@@ -6,7 +6,7 @@
 /*   By: miokrako <miokrako@student.42antananari    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/18 20:22:34 by tarandri          #+#    #+#             */
-/*   Updated: 2026/01/14 23:41:28 by miokrako         ###   ########.fr       */
+/*   Updated: 2026/01/16 13:24:47 by miokrako         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,6 +29,7 @@ typedef struct s_env
 {
 	char			*key;
 	char			*value;
+	int				exported;
 	struct s_env	*next;
 }	t_env;
 

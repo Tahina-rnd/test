@@ -6,7 +6,7 @@
 /*   By: miokrako <miokrako@student.42antananari    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/24 10:49:05 by miokrako          #+#    #+#             */
-/*   Updated: 2026/01/11 23:27:41 by miokrako         ###   ########.fr       */
+/*   Updated: 2026/01/16 13:48:45 by miokrako         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,6 +37,7 @@ t_env	*new_env_node_kv(char *key, char *value)
 		free_env_node_partial(node);
 		return (NULL);
 	}
+	node->exported = 1;
 	node->next = NULL;
 	return (node);
 }

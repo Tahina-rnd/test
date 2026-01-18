@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   main.c                                             :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: tarandri <tarandri@student.42antananarivo. +#+  +:+       +#+        */
+/*   By: miokrako <miokrako@student.42antananari    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/15 09:40:43 by tarandri          #+#    #+#             */
-/*   Updated: 2026/01/15 06:28:17 by tarandri         ###   ########.fr       */
+/*   Updated: 2026/01/16 08:26:29 by miokrako         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,22 +23,22 @@ static void	process_input(t_shell *shell)
 		shell->commands = parser(shell->tokens, shell);
 		if (shell->commands)
 		{
-			expander(shell, shell->commands);			
-			shell->command_running = 1;			
-			executor(shell);			
+			expander(shell, shell->commands);
+			shell->command_running = 1;
+			executor(shell);
 			shell->command_running = 0;
 		}
 	}
 }
 
-static void check_interrupted_signal(t_shell *shell)
+static void	check_interrupted_signal(t_shell *shell)
 {
 	if (g_received_signal == SIGINT)
-    {
-        if (shell->last_exit_status != 131)
-            shell->last_exit_status = 130;            
-        g_received_signal = 0;
-    }
+	{
+		if (shell->last_exit_status != 131)
+			shell->last_exit_status = 130;
+		g_received_signal = 0;
+	}
 }
 
 static void	minishell_loop(t_shell *shell)
@@ -51,7 +51,7 @@ static void	minishell_loop(t_shell *shell)
 		check_interrupted_signal(shell);
 		if (!shell->input)
 		{
-			printf("exit\n");
+			ft_putstr_fd("exit\n", 2);
 			break ;
 		}
 		if (*shell->input)

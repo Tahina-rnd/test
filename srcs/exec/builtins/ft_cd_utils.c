@@ -6,11 +6,27 @@
 /*   By: miokrako <miokrako@student.42antananari    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/18 21:31:02 by miokrako          #+#    #+#             */
-/*   Updated: 2026/01/11 23:15:13 by miokrako         ###   ########.fr       */
+/*   Updated: 2026/01/16 20:55:00 by miokrako         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../../../includes/exec.h"
+
+char	*resolve_dotdot_logical(char *pwd)
+{
+	char	*last_slash;
+	char	*result;
+
+	if (!pwd || pwd[0] != '/')
+		return (NULL);
+	if (ft_strcmp(pwd, "/") == 0)
+		return (ft_strdup("/"));
+	last_slash = ft_strrchr(pwd, '/');
+	if (!last_slash || last_slash == pwd)
+		return (ft_strdup("/"));
+	result = ft_strndup(pwd, last_slash - pwd);
+	return (result);
+}
 
 char	*build_absolute_path(char *current_pwd, char *dir)
 {

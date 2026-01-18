@@ -6,7 +6,7 @@
 /*   By: tarandri <tarandri@student.42antananarivo. +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/27 15:18:09 by tarandri          #+#    #+#             */
-/*   Updated: 2026/01/14 20:32:21 by tarandri         ###   ########.fr       */
+/*   Updated: 2026/01/18 17:50:16 by tarandri         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -58,6 +58,8 @@ static void	print_export_line(char *str)
 {
 	int	i;
 
+	if (str[0] == '_' && str[1] == '=')
+		return ;
 	ft_putstr_fd("declare -x ", 1);
 	i = 0;
 	while (str[i] && str[i] != '=')
@@ -91,4 +93,3 @@ void	export_onl(t_shell *shell)
 	}
 	free_tab(envp);
 }
-

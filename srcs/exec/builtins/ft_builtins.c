@@ -6,7 +6,7 @@
 /*   By: miokrako <miokrako@student.42antananari    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/18 21:31:02 by miokrako          #+#    #+#             */
-/*   Updated: 2026/01/14 15:25:39 by miokrako         ###   ########.fr       */
+/*   Updated: 2026/01/16 14:15:20 by miokrako         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -52,23 +52,6 @@ int	builtin_echo(char **args)
 	return (0);
 }
 
-// int	builtin_pwd(void)
-// {
-// 	char	*cwd;
-
-// 	cwd = getcwd(NULL, 0);
-// 	if (cwd)
-// 	{
-// 		printf("%s\n", cwd);
-// 		free(cwd);
-// 		return (0);
-// 	}
-// 	else
-// 	{
-// 		perror("minishell: pwd");
-// 		return (1);
-// 	}
-// }
 int	builtin_pwd(t_shell *shell)
 {
 	char	*cwd;
@@ -81,17 +64,14 @@ int	builtin_pwd(t_shell *shell)
 		free(cwd);
 		return (0);
 	}
-
-	//FALLBACK : Utiliser $PWD si getcwd() échoue
 	pwd_env = get_env_value(shell->env, "PWD");
-	if (pwd_env)
+	if (pwd_env && pwd_env[0] != '\0')
 	{
 		printf("%s\n", pwd_env);
 		return (0);
 	}
-
-	//Dernier recours : Message d'erreur clair
-	ft_putstr_fd("minishell: pwd: cannot access parent directories: ", 2);
+	ft_putstr_fd("pwd: error retrieving current directory: ", 2);
+	ft_putstr_fd("getcwd: cannot access parent directories: ", 2);
 	ft_putstr_fd("No such file or directory\n", 2);
 	return (1);
 }
@@ -100,7 +80,7 @@ int	builtin_env(t_env *env)
 {
 	while (env)
 	{
-		if (env->value && env->value[0] != '\0')
+		if (env->exported && env->value != NULL)
 			printf("%s=%s\n", env->key, env->value);
 		env = env->next;
 	}

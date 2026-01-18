@@ -6,7 +6,7 @@
 /*   By: tarandri <tarandri@student.42antananarivo. +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/11 23:05:52 by tarandri          #+#    #+#             */
-/*   Updated: 2026/01/14 19:49:19 by tarandri         ###   ########.fr       */
+/*   Updated: 2026/01/18 17:50:02 by tarandri         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,6 +24,7 @@ t_env	*exp_create_env_node(const char *key, const char *value)
 		new_node->value = strdup(value);
 	else
 		new_node->value = NULL;
+	new_node->exported = 0;
 	new_node->next = NULL;
 	return (new_node);
 }
@@ -75,11 +76,17 @@ int	update_or_add_env(t_shell *shell, char *key, char *value)
 				current->value = ft_strdup(value);
 			else
 				current->value = NULL;
+			current->exported = 1;
 			return (0);
 		}
 		current = current->next;
 	}
 	exp_add_env_node_back(&shell->env, exp_create_env_node(key, value));
+	current = shell->env;
+	while (current && current->next)
+		current = current->next;
+	if (current)
+		current->exported = 1;
 	return (0);
 }
 
