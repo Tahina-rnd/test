@@ -6,7 +6,7 @@
 /*   By: miokrako <miokrako@student.42antananari    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/24 11:01:22 by miokrako          #+#    #+#             */
-/*   Updated: 2026/01/19 10:44:30 by miokrako         ###   ########.fr       */
+/*   Updated: 2026/01/19 10:57:15 by miokrako         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -128,4 +128,5 @@ int		is_append_mode(const char *arg);
 void	print_permission_error(char *file);
 void	print_file_error(char *file);
 int		check_file_access(char *file);
+
 #endif

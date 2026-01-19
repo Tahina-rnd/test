@@ -40,6 +40,5 @@ int	handle_append_export(t_shell *shell, char *key, char *value)
 	}
 	else
 		update_or_add_env(shell, key, value);
-	free(value);
 	return (0);
 }
