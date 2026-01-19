@@ -6,25 +6,19 @@
 /*   By: tarandri <tarandri@student.42antananarivo. +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/26 07:45:47 by tarandri          #+#    #+#             */
-/*   Updated: 2026/01/13 12:39:46 by tarandri         ###   ########.fr       */
+/*   Updated: 2026/01/19 12:37:46 by tarandri         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "../../../includes/parsing.h"
+#include "../../../includes/exec.h"
 
 static int	handle_pipe(t_command **current_cmd, t_token **curr_token)
 {
 	if (!(*current_cmd)->args && !(*current_cmd)->input_redirection
 		&& !(*current_cmd)->output_redirection && !(*current_cmd)->heredoc)
-	{
-		ft_putstr_fd("Minishell: syntax error near unexpected token `|'\n", 2);
 		return (0);
-	}
 	if ((*curr_token)->next && (*curr_token)->next->type == END)
-	{
-		ft_putstr_fd("Minishell: syntax error near unexpected token `|'\n", 2);
 		return (0);
-	}
 	*current_cmd = create_command();
 	if (!*current_cmd)
 		return (0);
@@ -53,10 +47,25 @@ static int	process_token(t_command **curr_cmd, t_token **tokens,
 	return (1);
 }
 
-static void	if_pipe(t_shell *shell)
+static void	*handle_syntax_error(t_shell *shell, t_command *head, t_token *tok)
 {
-	ft_putstr_fd("Minishell: syntax error near unexpected token `|'\n", 2);
 	shell->last_exit_status = 2;
+	shell->commands = head;
+	process_heredocs(shell);
+	ft_putstr_fd("Minishell: syntax error near unexpected token `", 2);
+	if (tok->type == PIPE)
+		ft_putstr_fd("|", 2);
+	else if (tok->type == END || !tok->next)
+		ft_putstr_fd("newline", 2);
+	else if (tok->next && tok->next->literal)
+		ft_putstr_fd(tok->next->literal, 2);
+	else
+		ft_putstr_fd("newline", 2);
+	ft_putstr_fd("'\n", 2);
+	cleanup_heredocs(shell);
+	shell->commands = NULL;
+	free_commands(head);
+	return (NULL);
 }
 
 t_command	*parser(t_token *tokens, t_shell *shell)
@@ -68,7 +77,8 @@ t_command	*parser(t_token *tokens, t_shell *shell)
 		return (NULL);
 	if (tokens->type == PIPE)
 	{
-		if_pipe(shell);
+		ft_putstr_fd("Minishell: syntax error near unexpected token `|'\n", 2);
+		shell->last_exit_status = 2;
 		return (NULL);
 	}
 	head = create_command();
@@ -78,11 +88,7 @@ t_command	*parser(t_token *tokens, t_shell *shell)
 	while (tokens && tokens->type != END)
 	{
 		if (!process_token(&curr_cmd, &tokens, &head, shell))
-		{
-			shell->last_exit_status = 2;
-			free_commands(head);
-			return (NULL);
-		}
+			return (handle_syntax_error(shell, head, tokens));
 		tokens = tokens->next;
 	}
 	return (head);

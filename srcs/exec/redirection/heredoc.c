@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   heredoc.c                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: miokrako <miokrako@student.42antananari    +#+  +:+       +#+        */
+/*   By: tarandri <tarandri@student.42antananarivo. +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/08 15:45:17 by miokrako          #+#    #+#             */
-/*   Updated: 2026/01/11 23:43:19 by miokrako         ###   ########.fr       */
+/*   Updated: 2026/01/19 12:38:03 by tarandri         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -75,7 +75,7 @@ void	cleanup_heredocs(t_shell *shell)
 		heredoc = cmd->heredoc;
 		while (heredoc)
 		{
-			if (heredoc->file)
+			if (heredoc->file && ft_strncmp(heredoc->file, "/tmp/.heredoc_", 14) == 0)
 				unlink(heredoc->file);
 			heredoc = heredoc->next;
 		}
