@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ft_export_utils.c                                  :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: tarandri <tarandri@student.42antananarivo. +#+  +:+       +#+        */
+/*   By: miokrako <miokrako@student.42antananari    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/11/27 15:18:09 by tarandri          #+#    #+#             */
-/*   Updated: 2026/01/18 17:50:16 by tarandri         ###   ########.fr       */
+/*   Created: 2025/11/27 15:18:09 by miokrako          #+#    #+#             */
+/*   Updated: 2026/01/19 10:28:40 by miokrako         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 

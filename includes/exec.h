@@ -6,7 +6,7 @@
 /*   By: miokrako <miokrako@student.42antananari    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/24 11:01:22 by miokrako          #+#    #+#             */
-/*   Updated: 2026/01/16 21:13:35 by miokrako         ###   ########.fr       */
+/*   Updated: 2026/01/19 10:44:30 by miokrako         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,8 +14,6 @@
 # define EXEC_H
 # define BUFFER_SIZE 1024
 # define MAX_HEREDOCS 16
-# define PATH_MAX 4096
-
 # include "parsing.h"
 
 void	child_process(t_command *cmd, t_shell *shell, int prev[2], int curr[2]);
@@ -118,7 +116,7 @@ char	*get_new_pwd_relative(char *old_pwd, char *new_dir);
 char	*try_cwd_path(char *cmd);
 void	check_dot_cases(char *cmd, t_shell *shell, char **args_array);
 char	*get_old_pwd(t_env *env);
-void	update_pwd_after_cd(t_env *env, char *old_pwd);
+void	update_pwd_after_cd(t_env *env, char *old_pwd, char *dest_dir);
 int		handle_input_redirections(t_redir *input_list);
 int		check_redir(t_command *cmd, t_redir *last_hd, t_redir *last_in);
 int		handle_chdir_failure(char *dir, char *old_pwd, t_env *env);
@@ -127,4 +125,7 @@ char	*get_target_directory(char **args, t_env *env);
 char	*save_current_pwd(t_env *env);
 int		handle_append_export(t_shell *shell, char *key, char *value);
 int		is_append_mode(const char *arg);
+void	print_permission_error(char *file);
+void	print_file_error(char *file);
+int		check_file_access(char *file);
 #endif

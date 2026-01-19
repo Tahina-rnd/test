@@ -1,3 +1,8 @@
+
+
+
+
+
 1- VITA testena sisa
 miokrako@c1r7s1:~/Music/br$ bash | wc -l
 miokrako@c1r7s1:~/Music/br$
@@ -236,7 +241,7 @@ bash-5.2$
 
 
 
-7-
+7- VITA
 expander_process2.c
 misy error mampiasa printf, soloina ft_putstr_fd
 static int	expand_redir_file(t_redir *redir, t_shell *shell)

@@ -6,7 +6,7 @@
 /*   By: tarandri <tarandri@student.42antananarivo. +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/18 21:22:34 by tarandri          #+#    #+#             */
-/*   Updated: 2026/01/15 12:04:32 by tarandri         ###   ########.fr       */
+/*   Updated: 2026/01/19 09:36:44 by tarandri         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,7 +21,7 @@ void		free_env_list(t_env *env_list);
 t_env		*create_env_node(const char *key, const char *value);
 void		add_env_node_back(t_env **head, t_env *new_node);
 t_env		*dup_env(char **envp);
-t_token		*lexer(char *input);
+t_token		*lexer(t_shell *shell);
 int			is_whitespace(char c);
 int			is_operator(char c);
 void		token_add_back(t_token **lst, t_token *new);

@@ -6,7 +6,7 @@
 /*   By: miokrako <miokrako@student.42antananari    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/24 13:32:52 by miokrako          #+#    #+#             */
-/*   Updated: 2026/01/16 15:08:46 by miokrako         ###   ########.fr       */
+/*   Updated: 2026/01/19 10:44:40 by miokrako         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -68,28 +68,18 @@ static int	handle_all_output_redirections(t_redir *output_list)
 
 static int	validate_input_redirection(t_redir *input_list)
 {
-	t_redir	*last_redir;
+	t_redir	*current;
 
 	if (!input_list)
 		return (0);
-	last_redir = get_last_redir(input_list);
-	if (!last_redir || !last_redir->file)
-		return (1);
-	if (access(last_redir->file, F_OK) == -1)
+	current = input_list;
+	while (current)
 	{
-		ft_putstr_fd("minishell: ", 2);
-		ft_putstr_fd(last_redir->file, 2);
-		ft_putstr_fd(": ", 2);
-		ft_putstr_fd(strerror(errno), 2);
-		ft_putstr_fd("\n", 2);
-		return (1);
-	}
-	if (access(last_redir->file, R_OK) == -1)
-	{
-		ft_putstr_fd("minishell: ", 2);
-		ft_putstr_fd(last_redir->file, 2);
-		ft_putstr_fd(": Permission denied\n", 2);
-		return (1);
+		if (!current->file)
+			return (1);
+		if (check_file_access(current->file))
+			return (1);
+		current = current->next;
 	}
 	return (0);
 }

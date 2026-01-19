@@ -6,7 +6,7 @@
 /*   By: miokrako <miokrako@student.42antananari    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/11 23:05:52 by miokrako          #+#    #+#             */
-/*   Updated: 2026/01/16 16:04:34 by miokrako         ###   ########.fr       */
+/*   Updated: 2026/01/19 10:26:53 by miokrako         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,25 +36,28 @@ static void	restore_fd(int original_stdin, int original_stdout)
 	close(original_stdout);
 }
 
-void	update_pwd_after_cd(t_env *env, char *old_pwd)
+void	update_pwd_after_cd(t_env *env, char *old_pwd, char *dest_dir)
 {
 	char	*cwd;
 
 	cwd = getcwd(NULL, 0);
 	if (!cwd)
-		ft_putstr_fd("cd: error retrieving current directory: getcwd: \
-cannot access parent directories: No such file or directory\n", 2);
+	{
+		ft_putstr_fd("cd: error retrieving current directory: getcwd: ", 2);
+		ft_putstr_fd("cannot access parent directories: ", 2);
+		ft_putstr_fd("No such file or directory\n", 2);
+		if (old_pwd && dest_dir)
+			update_pwd_vars_unnormalized(env, old_pwd, dest_dir);
+	}
 	else
 	{
 		update_env_var(env, "PWD", cwd);
 		free(cwd);
+		if (old_pwd)
+			update_env_var(env, "OLDPWD", old_pwd);
 	}
 	if (old_pwd)
-	{
-		update_env_var(env, "OLDPWD", old_pwd);
-		if (old_pwd != get_env_value(env, "PWD"))
-			free(old_pwd);
-	}
+		free(old_pwd);
 }
 
 int	handle_chdir_failure(char *dir, char *old_pwd, t_env *env)

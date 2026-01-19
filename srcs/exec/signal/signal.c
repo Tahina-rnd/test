@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   signal.c                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: tarandri <tarandri@student.42antananarivo. +#+  +:+       +#+        */
+/*   By: miokrako <miokrako@student.42antananari    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/04 15:17:38 by miokrako          #+#    #+#             */
-/*   Updated: 2026/01/15 10:36:28 by tarandri         ###   ########.fr       */
+/*   Updated: 2026/01/19 10:29:38 by miokrako         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 

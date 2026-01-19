@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   export_helpers.c                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: tarandri <tarandri@student.42antananarivo. +#+  +:+       +#+        */
+/*   By: miokrako <miokrako@student.42antananari    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/01/11 23:05:52 by tarandri          #+#    #+#             */
-/*   Updated: 2026/01/18 17:50:02 by tarandri         ###   ########.fr       */
+/*   Created: 2026/01/11 23:05:52 by miokrako          #+#    #+#             */
+/*   Updated: 2026/01/19 10:28:05 by miokrako         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 

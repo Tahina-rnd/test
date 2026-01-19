@@ -6,7 +6,7 @@
 /*   By: tarandri <tarandri@student.42antananarivo. +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/18 21:25:06 by tarandri          #+#    #+#             */
-/*   Updated: 2026/01/10 09:18:32 by tarandri         ###   ########.fr       */
+/*   Updated: 2026/01/19 09:36:24 by tarandri         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,12 +29,14 @@ static t_token	*get_next_token(char *input, int *i)
 	return (token);
 }
 
-t_token	*lexer(char *input)
+t_token	*lexer(t_shell *shell)
 {
 	t_token	*head;
 	t_token	*new_tok;
+	char	*input;
 	int		i;
 
+	input = shell->input;
 	head = NULL;
 	i = 0;
 	while (input[i])
@@ -46,6 +48,7 @@ t_token	*lexer(char *input)
 		if (!new_tok)
 		{
 			free_tokens(head);
+			shell->last_exit_status = 2;
 			return (NULL);
 		}
 		token_add_back(&head, new_tok);
