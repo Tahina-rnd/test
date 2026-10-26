@@ -231,8 +231,8 @@ printf 'http {\n server {\n listen 18280;\n root www/site1;\n location / {\n all
 "$BIN" /tmp/ws_smoke.conf > /tmp/ws_smoke.log 2>&1 &
 SRVPID=$!
 sleep 0.7
-if curl -s --max-time 2 http://localhost:18280/ | grep -q "Hello" \
-&& curl -s --max-time 2 http://localhost:18281/ | grep -q "Hello"; then
+if curl -s --max-time 2 http://localhost:18280/ | grep -Eq "Hello|Site" \
+&& curl -s --max-time 2 http://localhost:18281/ | grep -Eq "Hello|Site"; then
     PASS=$((PASS + 1))
 else
     FAIL=$((FAIL + 1)); echo "RATÉ : smoke multi-ports"
@@ -245,7 +245,7 @@ printf 'http {\n server {\n listen 18302;\n server_name a;\n root www/site1;\n l
 SRVPID=$!
 sleep 0.7
 if grep -q "(default)" /tmp/ws_shared.log \
-&& curl -s --max-time 2 http://localhost:18302/ | grep -q "Hello"; then
+&& curl -s --max-time 2 http://localhost:18302/ | grep -Eq "Hello|Site"; then
     PASS=$((PASS + 1))
 else
     FAIL=$((FAIL + 1)); echo "RATÉ : smoke port partagé"

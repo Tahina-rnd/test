@@ -1,414 +1,521 @@
-# NOTES.md — Contraintes éliminatoires Webserv
+# NOTES.md — Contraintes du sujet et état de conformité
 
-Ce fichier regroupe **toutes les contraintes éliminatoires** extraites du sujet Webserv.
-Chaque contrainte est accompagnée de sa justification, de sa méthode de vérification
-et du moment où la vérifier.
-
----
-
-## Comment utiliser ce fichier
-
-- **Avant chaque commit** : relire la section concernée par le code modifié.
-- **Avant chaque test** : vérifier les contraintes réseau.
-- **Avant le rendu** : relire tout le fichier de haut en bas.
-- **Pendant la soutenance** : avoir ce fichier ouvert, il sert de checklist.
-
----
-
-## 1. Contraintes éliminatoires absolues (note 0 immédiate)
-
-### 1.1 — Crash du programme
-
-- [ ] **Contrainte** : Le programme ne doit jamais planter, même en cas de manque de mémoire, ni se terminer de manière inattendue.
-- **Pourquoi** : Un serveur qui crash est inutilisable. Le sujet le dit explicitement.
-- **Comment vérifier** :
-  - [ ] Lancer `./webserv configs/default.conf`
-  - [ ] Envoyer des requêtes malformées via `telnet`
-  - [ ] Lancer un stress test (`ab`, `siege`)
-  - [ ] Vérifier que le processus est toujours vivant après
-- **Quand vérifier** : à chaque étape, surtout après l'étape 7 (event loop).
-
-### 1.2 — I/O réseau sans `poll()`
-
-- [ ] **Contrainte** : Ne jamais appeler `read`/`recv` ou `write`/`send` sur un socket/pipe/FIFO sans disponibilité préalable vérifiée par `poll()` (ou équivalent).
-- **Pourquoi** : "Appeler read/recv ou write/send sur ces descripteurs sans disponibilité préalable entraînera une note de 0."
-- **Comment vérifier** :
-  - [ ] Auditer le code : chaque `read`/`write` sur socket doit être précédé d'un `poll()` qui a retourné `POLLIN`/`POLLOUT`.
-  - [ ] `grep -n "read\|write\|recv\|send" srcs/` et vérifier chaque occurrence.
-- **Quand vérifier** : après chaque ajout d'I/O réseau (étapes 6 à 23).
-
-### 1.3 — `errno` après `read`/`write`
-
-- [ ] **Contrainte** : Vérifier `errno` pour ajuster le comportement du serveur est strictement interdit après une opération de lecture ou d'écriture.
-- **Pourquoi** : Interdiction explicite du sujet.
-- **Comment vérifier** :
-  - [ ] `grep -n "errno" srcs/`
-  - [ ] Aucun `errno` ne doit apparaître après un `read`/`write`/`recv`/`send`.
-  - [ ] L'usage d'`errno` reste autorisé ailleurs (ex. `socket`, `bind`, `accept`).
-- **Quand vérifier** : après chaque ajout d'I/O (étapes 6 à 23).
-
-### 1.4 — `fork` hors CGI
-
-- [ ] **Contrainte** : `fork` ne peut être utilisé que pour le CGI.
-- **Pourquoi** : Interdiction explicite du sujet.
-- **Comment vérifier** :
-  - [ ] `grep -n "fork" srcs/`
-  - [ ] Chaque `fork` doit être dans un fichier/classe CGI (`CgiHandler`).
-- **Quand vérifier** : après l'étape 20 (CGI).
-
-### 1.5 — `execve` d'un autre serveur web
-
-- [ ] **Contrainte** : Ne pas `execve` un autre serveur web (NGINX, Apache, etc.).
-- **Pourquoi** : Interdiction explicite.
-- **Comment vérifier** :
-  - [ ] `grep -n "execve" srcs/`
-  - [ ] Chaque `execve` doit cibler un binaire CGI (Python, PHP), pas un serveur.
-- **Quand vérifier** : après l'étape 20 (CGI).
-
-### 1.6 — Requête suspendue indéfiniment
-
-- [ ] **Contrainte** : Une requête vers le serveur ne doit jamais rester suspendue indéfiniment.
-- **Pourquoi** : "Une requête vers votre serveur ne doit jamais rester suspendue indéfiniment."
-- **Comment vérifier** :
-  - [ ] Client qui envoie une requête partielle → fermé après timeout.
-  - [ ] CGI qui boucle → tué après timeout.
-  - [ ] Client qui n'envoie rien → fermé après timeout.
-- **Quand vérifier** : après l'étape 9 (timeouts) et l'étape 23 (CGI timeout).
+> **Rôle de ce fichier : le contrôle qualité.**
+> Il répond à une seule question : **« sommes-nous conformes au sujet, oui ou
+> non ? »** Chaque règle est accompagnée de sa conséquence, de la commande qui
+> permet de la vérifier et de son état réel.
+>
+> - Le texte officiel reste `sujet.fr.md` : c'est la référence, on n'y touche pas.
+> - Pour savoir *quoi faire ensuite* → `STEP.md`.
+> - Pour comprendre *comment le code marche* → `EXPLAIN.md`.
+> - Pour comprendre *pourquoi ces choix* → `DECISIONS.md`.
+>
+> **Dernière vérification :** 25 octobre 2026.
 
 ---
 
-## 2. Contraintes éliminatoires de compilation
+## 0. Comment utiliser ce fichier
 
-### 2.1 — Makefile conforme
+| Moment | Ce qu'on relit |
+|---|---|
+| Avant un commit | La section concernée par le code modifié |
+| Avant de lancer les tests | Les règles réseau (§3) |
+| Avant le rendu | Tout le fichier, de haut en bas |
+| Pendant la soutenance | §1 et §7 : les tableaux de synthèse |
 
-- [ ] **Contrainte** : Fournir un `Makefile` qui compile les sources, sans relinking inutile, avec au minimum les règles :
-  - [ ] `$(NAME)`
-  - [ ] `all`
-  - [ ] `clean`
-  - [ ] `fclean`
-  - [ ] `re`
-- **Pourquoi** : "Il ne doit pas effectuer de relinking inutile."
-- **Comment vérifier** :
-  - [ ] `make` → compile
-  - [ ] `make` à nouveau → ne relink pas
-  - [ ] `make re` → `fclean` + `all`
-  - [ ] `make clean` → supprime les `.o`
-  - [ ] `make fclean` → supprime les `.o` et le binaire
-- **Quand vérifier** : à chaque modification du Makefile.
+**Légende :**
 
-### 2.2 — Compilation C++98
+| Symbole | Sens |
+|---|---|
+| ✅ | Vérifié, conforme |
+| ⚠️ | Partiel, à confirmer ou à compléter |
+| ❌ | Absent : la partie obligatoire n'est pas terminée |
+| ➖ | Non applicable (projet ciblé Linux) |
 
-- [ ] **Contrainte** : Compiler avec `c++` et les options `-Wall -Wextra -Werror`.
-- [ ] **Contrainte** : Respecter la norme C++98, toujours compiler avec `-std=c++98`.
-- **Pourquoi** : Interdiction explicite.
-- **Comment vérifier** :
-  - [ ] `make` ne produit aucun warning.
-  - [ ] Aucun `auto`, `nullptr`, `std::to_string`, `range-based for`, `lambda`, `std::unique_ptr`, etc.
-  - [ ] `grep -n "auto \|nullptr\|std::to_string\|for (.* : " srcs/`
-- **Quand vérifier** : à chaque commit.
-
-### 2.3 — Bibliothèques externes et Boost
-
-- [ ] **Contrainte** : Toute bibliothèque externe et les bibliothèques Boost sont interdites.
-- **Pourquoi** : Interdiction explicite.
-- **Comment vérifier** :
-  - [ ] Aucun `#include <boost/...>`
-  - [ ] Aucun lien vers une lib externe dans le Makefile (`-l...`)
-  - [ ] Seules les libs standard C++98 et POSIX sont utilisées.
-- **Quand vérifier** : à chaque ajout d'include.
+> **Règle d'or :** une case ✅ doit pouvoir être justifiée par une commande ou
+> un test. Sinon elle passe en ⚠️.
 
 ---
 
-## 3. Contraintes éliminatoires réseau
+## 1. Les règles qui mettent 0 immédiatement
 
-### 3.1 — Un seul `poll()` (ou équivalent)
+| # | Règle | Pourquoi | Vérification rapide | État |
+|---|---|---|---|---|
+| 1 | Ne jamais planter | Un serveur doit rester disponible | requêtes malformées + stress | ✅ tests ciblés |
+| 2 | Makefile avec `NAME`, `all`, `clean`, `fclean`, `re` | Exigence de rendu | `make re` | ✅ |
+| 3 | C++98, `-std=c++98` | Exigence de rendu | `make re` sans warning | ✅ |
+| 4 | Aucune bibliothèque externe | Exigence de rendu | `ldd webserv` | ✅ |
+| 5 | Fichier de configuration en argument ou chemin par défaut | Exigence | `./webserv configs/default.conf` | ✅ |
+| 6 | Ne pas `execve` un autre serveur | Interdiction | aucun appel | ✅ |
+| 7 | Rester non bloquant en permanence | Exigence | sockets en `O_NONBLOCK` | ✅ |
+| 8 | Un seul `poll()` pour toutes les E/S | Note 0 | `grep -rn "poll(" srcs` | ✅ |
+| 9 | `poll()` surveille lecture **et** écriture | Exigence | `buildPollFds()` | ✅ |
+| 10 | Jamais de `read`/`write` socket sans `poll()` | Note 0 | audit des appels | ✅ |
+| 11 | Jamais d'`errno` après une E/S | Note 0 | audit de `Connection` | ✅ |
+| 12 | Aucune requête suspendue indéfiniment | Note 0 | timeout 60 s | ✅ |
+| 13 | Compatible navigateur standard | Exigence | test manuel | ⚠️ à refaire |
+| 14 | Codes HTTP précis | Exigence | `test_http` + `curl` | ✅ cas implémentés |
+| 15 | Pages d'erreur par défaut | Exigence | `Response::buildError` | ✅ |
+| 16 | `fork` uniquement pour le CGI | Note 0 | aucun `fork` aujourd'hui | ✅ |
+| 17 | Servir un site statique complet | Exigence | `www/site1`, `www/site2` | ✅ |
+| 18 | Téléversement de fichiers | Exigence | `test/sprint4_tests.sh` | ✅ |
+| 19 | GET, POST et DELETE | Exigence | dispatcher + tests | ✅ |
+| 20 | Tenir la charge | Exigence | `ab -n 2000 -c 100` | ✅ audit |
+| 21 | Plusieurs ports | Exigence | `demo_multi.conf` | ✅ |
+| 22 | `fcntl` limité à `F_SETFL`/`O_NONBLOCK`/`FD_CLOEXEC` | Note 0 sur macOS | `grep -rn fcntl` | ✅ conforme (clause macOS ➖) |
+| 23 | `README.md` en anglais | Exigence de rendu | fichier à la racine | ✅ créé |
+| 24 | Configs + fichiers de démo | Exigence | `configs/`, `www/` | ⚠️ CGI manquant |
 
-- [ ] **Contrainte** : N'utiliser qu'un seul `poll()` (ou équivalent) pour toutes les opérations d'E/S entre clients et serveur, l'écoute comprise.
-- **Pourquoi** : "Il doit être non bloquant et n'utiliser qu'un seul poll() (ou équivalent) pour toutes les opérations d'E/S entre les clients et le serveur (l'écoute comprise)."
-- **Comment vérifier** :
-  - [ ] Un seul appel `poll()` dans tout le code.
-  - [ ] `grep -n "poll(" srcs/`
-  - [ ] Cet unique `poll()` surveille tous les fd (listen + clients + pipes CGI).
-- **Quand vérifier** : après l'étape 6 (premier `poll()`), puis à chaque étape réseau.
-
-### 3.2 — Lecture ET écriture simultanées
-
-- [ ] **Contrainte** : `poll()` (ou équivalent) doit surveiller la lecture et l'écriture simultanément.
-- **Pourquoi** : "poll() (ou équivalent) doit surveiller la lecture et l'écriture simultanément."
-- **Comment vérifier** :
-  - [ ] Dans le tableau `pollfd`, chaque client a `POLLIN` ou `POLLOUT` selon son état.
-  - [ ] Le serveur peut lire d'un client pendant qu'il écrit à un autre.
-- **Quand vérifier** : après l'étape 7 (event loop complète).
-
-### 3.3 — Non-blocage permanent
-
-- [ ] **Contrainte** : Le serveur doit rester non bloquant en permanence.
-- **Pourquoi** : "Votre serveur doit rester non bloquant en permanence."
-- **Comment vérifier** :
-  - [ ] Tous les fd sockets sont en `O_NONBLOCK`.
-  - [ ] Aucun appel bloquant (`read`, `write`, `accept`, `connect`, `recv`, `send`) n'est fait sur un fd non prêt.
-  - [ ] Le serveur répond à un nouveau client pendant qu'un autre envoie une grosse réponse.
-- **Quand vérifier** : après l'étape 6, puis à chaque étape réseau.
-
-### 3.4 — Fichiers disques : exemption
-
-- [ ] **Contrainte** : Les `read()` / `write()` sur fichiers disques classiques n'ont pas besoin de `poll()`.
-- **Pourquoi** : "Vous n'êtes pas obligé d'utiliser poll() (ou une fonction équivalente) pour les fichiers disques classiques."
-- **Comment vérifier** :
-  - [ ] Les lectures de fichiers statiques (`readFile`) ne passent pas par `poll()`.
-  - [ ] Les écritures d'upload ne passent pas par `poll()`.
-- **Quand vérifier** : après l'étape 15 (fichiers statiques) et l'étape 17 (upload).
-
-### 3.5 — macOS : `fcntl` limité
-
-- [ ] **Contrainte** : Sur macOS, `fcntl()` n'est autorisé qu'avec les options :
-  - [ ] `F_SETFL`
-  - [ ] `O_NONBLOCK`
-  - [ ] `FD_CLOEXEC`
-- **Pourquoi** : "Toute autre option est interdite."
-- **Comment vérifier** :
-  - [ ] `grep -n "fcntl" srcs/`
-  - [ ] Aucune autre constante `F_*` ou `O_*` n'apparaît dans un appel `fcntl`.
-- **Quand vérifier** : après l'étape 6 (passage en non-bloquant).
-
-### 3.6 — Fichiers disques : pas d'attente
-
-- [ ] **Contrainte** : Les E/S qui peuvent attendre des données (sockets, pipes/FIFOs) doivent être non-bloquantes et pilotées par un unique `poll()`.
-- **Pourquoi** : "Les E/S qui peuvent attendre des données (sockets, pipes/FIFOs, etc.) doivent être non bloquantes et pilotées par un unique poll()."
-- **Comment vérifier** :
-  - [ ] Tous les pipes CGI sont en `O_NONBLOCK`.
-  - [ ] Tous les sockets sont en `O_NONBLOCK`.
-  - [ ] Aucun `read`/`write` sur ces fd sans `poll()` préalable.
-- **Quand vérifier** : après l'étape 20 (CGI).
+> **Conclusion immédiate :** les règles 18 et 19 sont satisfaites. Il reste
+> le CGI (Sprint 5) et les fichiers de démo associés pour que la partie
+> obligatoire soit complète.
 
 ---
 
-## 4. Contraintes éliminatoires fonctionnelles
+## 2. Compilation et structure
 
-### 4.1 — Méthodes obligatoires
+### 2.1 Makefile
 
-- [ ] **Contrainte** : Avoir au minimum les méthodes GET, POST, DELETE.
-- **Pourquoi** : "Vous devez avoir au minimum les méthodes GET, POST et DELETE."
-- **Comment vérifier** :
-  - [ ] `curl -X GET http://localhost:8080/` → réponse
-  - [ ] `curl -X POST --data "x=1" http://localhost:8080/` → réponse
-  - [ ] `curl -X DELETE http://localhost:8080/file.txt` → réponse
-- **Quand vérifier** : après l'étape 15 (GET), l'étape 17 (POST), l'étape 18 (DELETE).
+- [x] `NAME`, `all`, `clean`, `fclean`, `re` présents.
+- [x] Pas de relink inutile (dépendances `.d`).
+- [x] `-Wall -Wextra -Werror -std=c++98`.
+- [x] Les tests ont leurs propres cibles (`test-config`, `test-tokenizer`,
+      `test-http`).
+- [x] `.gitignore` ignore les binaires de test (`test_http` ajouté).
 
-### 4.2 — Site statique
+**Commande :**
 
-- [ ] **Contrainte** : Être capable de servir un site web entièrement statique.
-- **Pourquoi** : "Vous devez être capable de servir un site web entièrement statique."
-- **Comment vérifier** :
-  - [ ] Navigateur sur `http://localhost:8080/` → page HTML
-  - [ ] CSS, images, JS chargés correctement
-- **Quand vérifier** : après l'étape 15.
+```bash
+make re
+```
 
-### 4.3 — Upload de fichiers
+**Attendu :** aucune ligne `warning`, aucun `error`.
 
-- [ ] **Contrainte** : Les clients doivent pouvoir téléverser des fichiers.
-- **Pourquoi** : "Les clients doivent pouvoir téléverser des fichiers."
-- **Comment vérifier** :
-  - [ ] `curl -F "file=@test.txt" http://localhost:8080/upload` → fichier créé
-- **Quand vérifier** : après l'étape 17.
+### 2.2 C++98 et bibliothèques
 
-### 4.4 — Compatibilité navigateur
+- [x] Pas de `auto`, `nullptr`, `std::to_string`, lambda, etc.
+- [x] Uniquement la bibliothèque standard.
+- [x] Pas de Boost.
 
-- [ ] **Contrainte** : Le serveur doit être compatible avec les navigateurs web standard.
-- **Pourquoi** : "Votre serveur doit être compatible avec les navigateurs web standard de votre choix."
-- **Comment vérifier** :
-  - [ ] Ouvrir Firefox/Chrome sur `http://localhost:8080/`
-  - [ ] La page s'affiche, les ressources se chargent
-  - [ ] Pas d'erreur dans la console
-- **Quand vérifier** : après l'étape 15.
+**Commande :**
 
-### 4.5 — Codes de statut précis
+```bash
+ldd ./webserv
+```
 
-- [ ] **Contrainte** : Les codes de statut des réponses HTTP doivent être précis.
-- **Pourquoi** : "Les codes de statut de vos réponses HTTP doivent être précis."
-- **Comment vérifier** :
-  - [ ] 200 pour succès
-  - [ ] 404 pour fichier absent
-  - [ ] 405 pour méthode non autorisée
-  - [ ] 413 pour body trop gros
-  - [ ] 500 pour erreur interne
-- **Quand vérifier** : après l'étape 13.
+**Attendu :** uniquement `libstdc++`, `libm`, `libgcc_s`, `libc` et le loader.
 
-### 4.6 — Pages d'erreur par défaut
+### 2.3 Fichiers attendus
 
-- [ ] **Contrainte** : Le serveur doit avoir des pages d'erreur par défaut si aucune n'est fournie.
-- **Pourquoi** : "Votre serveur doit avoir des pages d'erreur par défaut si aucune n'est fournie."
-- **Comment vérifier** :
-  - [ ] Sans `error_page` dans la config, une 404 renvoie une page HTML par défaut.
-- **Quand vérifier** : après l'étape 13.
+```text
+Makefile
+includes/*.hpp
+srcs/*.cpp
+configs/*.conf
+www/...
+README.md
+```
 
-### 4.7 — Multi-ports
-
-- [ ] **Contrainte** : Le serveur doit pouvoir écouter sur plusieurs ports pour délivrer des contenus différents.
-- **Pourquoi** : "Votre serveur doit pouvoir écouter sur plusieurs ports pour délivrer des contenus différents."
-- **Comment vérifier** :
-  - [ ] Config avec deux `server { listen ... }`
-  - [ ] Contenus différents sur chaque port
-- **Quand vérifier** : après l'étape 8.
-
-### 4.8 — CGI obligatoire
-
-- [ ] **Contrainte** : Le serveur doit prendre en charge au moins un CGI (php-CGI, Python, etc.).
-- **Pourquoi** : "Votre serveur doit prendre en charge au moins un CGI (php-CGI, Python, etc.)."
-- **Comment vérifier** :
-  - [ ] `curl http://localhost:8080/cgi-bin/hello.py` → réponse du CGI
-- **Quand vérifier** : après l'étape 22.
-
-### 4.9 — Pas de `fork` hors CGI
-
-(Voir section 1.4)
-
-### 4.10 — Pas d'`execve` d'un autre serveur
-
-(Voir section 1.5)
+- [x] Tous les `.cpp` sont dans `srcs/`.
+- [x] Tous les en-têtes sont dans `includes/`.
+- [x] `README.md` à la racine.
+- [ ] Les fichiers de démo de chaque fonctionnalité sont complets (CGI manquant).
 
 ---
 
-## 5. Contraintes de rendu
+## 3. Réseau
 
-### 5.1 — Fichiers à soumettre
+### 3.1 Un seul `poll()`
 
-- [ ] **Contrainte** : Les fichiers à soumettre sont :
-  - [ ] `Makefile`
-  - [ ] `*.{h, hpp}`
-  - [ ] `*.cpp`
-  - [ ] `*.tpp`
-  - [ ] `*.ipp`
-  - [ ] fichiers de configuration
+- [x] Un seul appel à `poll()` dans tout le code.
+- [x] Il est dans `Server::run()`.
+- [x] Il surveille les listeners **et** les clients.
 
-### 5.2 — README.md
+**Commande :**
 
-- [ ] **Contrainte** : Fournir un `README.md` à la racine du dépôt Git.
-- [ ] **Contrainte** : La première ligne doit être en italique et indiquer :
-  - [ ] `*This project has been created as part of the 42 curriculum by <login1>[, <login2>[, <login3>[...]]]*`
-- [ ] **Contrainte** : Section « Description ».
-- [ ] **Contrainte** : Section « Instructions » (compilation, installation, exécution).
-- [ ] **Contrainte** : Section « Resources » (RFC, docs, usage IA).
-- [ ] **Contrainte** : README rédigé en anglais.
-- **Quand vérifier** : étape 28.
+```bash
+grep -rn "poll(" srcs includes
+```
 
-### 5.3 — Partie bonus conditionnelle
+**Attendu :** un seul résultat utile, dans `srcs/network/Server.cpp`.
 
-- [ ] **Contrainte** : La partie bonus ne sera évaluée que si la partie obligatoire est entièrement terminée sans problème.
-- **Pourquoi** : "Si vous ne remplissez pas toutes les exigences obligatoires, votre partie bonus ne sera pas évaluée."
-- **Comment vérifier** :
-  - [ ] Toutes les cases des sections 1 à 4 cochées avant de commencer le bonus.
-- **Quand vérifier** : avant l'étape 30.
+### 3.2 Aucune E/S sans disponibilité
 
-### 5.4 — Soumission Git
+- [x] `recv()` est appelé uniquement dans `Connection::handleReadable()`,
+      elle-même appelée quand `revents & POLLIN`.
+- [x] `send()` est appelé uniquement dans `Connection::handleWritable()`,
+      elle-même appelée quand `revents & POLLOUT`.
+- [x] `accept()` est appelé uniquement quand le listener est `POLLIN`.
 
-- [ ] **Contrainte** : Seul le contenu du dépôt Git sera évalué lors de la soutenance.
-- [ ] **Contrainte** : Vérifier les noms des fichiers.
-- [ ] **Contrainte** : Pendant l'évaluation, une brève modification peut être demandée.
-- **Quand vérifier** : étape 30.
+**Piège :** un `recv()` « pour vider le buffer » après la réponse est interdit.
+Ici, on ne le fait pas.
+
+### 3.3 Aucun `errno` après une E/S
+
+- [x] `Connection` ne lit jamais `errno` après `recv`/`send`.
+- [x] `recv` renvoie `0` ou `-1` → on ferme, sans analyser `errno`.
+- [x] `errno` n'est utilisé que pour les erreurs de **mise en place**
+      (`socket`, `bind`, `listen`, `getaddrinfo`), jamais pour piloter une E/S.
+
+**Commande :**
+
+```bash
+grep -rn "errno" srcs
+```
+
+**Attendu :** pas d'occurrence dans `Connection::handleReadable/Writable`.
+
+### 3.4 Non bloquant et `fcntl`
+
+- [x] Toutes les sockets sont en `O_NONBLOCK`.
+- [x] `fcntl` n'utilise que `F_SETFL` et `O_NONBLOCK`.
+- [x] `FD_CLOEXEC` est autorisé mais pas nécessaire ici.
+
+**Code actuel :**
+
+```cpp
+fcntl(fd, F_SETFL, O_NONBLOCK);
+```
+
+- [x] Pas de `F_GETFL` (interdit par le sujet).
+- [ ] `FD_CLOEXEC` sur les pipes CGI (à faire au Sprint 5).
+
+### 3.5 `listen` et `AI_PASSIVE`
+
+- [x] `listen 8080;` (host vide) écoute sur `0.0.0.0`.
+- [x] `getaddrinfo` reçoit `AI_PASSIVE`.
+- [x] Une socket par couple `host:port`.
+- [x] Deux `server` sur le même `host:port` partagent la socket (vhosts).
+
+**Vérification :**
+
+```bash
+ss -ltnp | grep 8080
+```
+
+**Attendu :** `0.0.0.0:8080`, pas `127.0.0.1:8080`.
+
+### 3.6 Timeouts
+
+- [x] Inactivité client : 60 s → fermeture.
+- [ ] CGI : 10 s → `SIGKILL` + `waitpid` (Sprint 5).
+- [x] Aucune requête ne peut rester suspendue indéfiniment côté client.
+
+### 3.7 `SIGPIPE`
+
+- [x] `SIGPIPE` est ignoré au démarrage.
+- [x] Un client qui coupe pendant un `send` ne tue pas le serveur.
+
+### 3.8 Fuites de descripteurs
+
+- [x] Les tests unitaires passent sous valgrind sans fuite.
+- [x] Les `Connection` en `CLOSING` sont fermées en fin de tour.
+- [x] Valgrind sur le serveur complet avec POST/GET/DELETE : 0 perte
+      définitive/indirecte/possible.
+
+### 3.9 Multi-ports et vhosts
+
+- [x] `demo_multi.conf` : 8080, 8081, 8082.
+- [x] `demo_vhosts.conf` : `alpha.local` et `beta.local` sur 8080.
+- [x] Sélection par `Host`, avec serveur par défaut.
 
 ---
 
-## 6. Contraintes transversales
+## 4. HTTP
 
-### 6.1 — Norme C++98
+### 4.1 Analyse de la requête
 
-- [ ] Pas de `auto`, `nullptr`, `std::to_string`, `range-based for`, `lambda`, `std::unique_ptr`, `std::shared_ptr`, `std::thread`, `std::mutex`, etc.
-- [ ] Préférer `<cstring>` à `<string.h>`, `<cstdlib>` à `<stdlib.h>`, etc.
+- [x] Ligne de requête : méthode, URI, version.
+- [x] `HTTP/1.0` et `HTTP/1.1` acceptés.
+- [x] Version inconnue → `505`.
+- [x] `Host` obligatoire en HTTP/1.1 → sinon `400`.
+- [x] En-têtes insensibles à la casse (stockés en minuscules).
+- [x] `Content-Length` et `Transfer-Encoding` ensemble → `400`.
+- [x] `Transfer-Encoding` inconnu → `501`.
+- [x] URI avec caractères de contrôle → `400`.
+- [x] Requête fragmentée acceptée (plusieurs `recv`).
+- [x] Deux requêtes dans un seul paquet (pipelining) acceptées.
 
-### 6.2 — Utilisation de l'IA
+### 4.2 Limites
 
-- [ ] N'utiliser que du contenu généré par l'IA que vous comprenez pleinement.
-- [ ] Pouvoir expliquer chaque ligne en soutenance.
-- [ ] Documenter l'usage de l'IA dans le README.
+| Limite | Valeur | Réponse |
+|---|---|---|
+| Ligne de requête | 8 Ko | `414` |
+| URI | 8 Ko | `414` |
+| En-têtes | 8 Ko | `431` |
+| Corps | `client_max_body_size` (défaut 1 Mo) | `413` |
+| Chunk trop grand | débordement détecté | `413` |
 
-### 6.3 — Tests
+- [x] Limite vérifiée même si tout arrive dans un seul paquet.
+- [x] Parsing manuel des nombres : pas de `strtol`/`strtoul`, débordement
+      détecté.
+- [x] Un corps chunked de 1 Mo est accepté.
 
-- [ ] Ne pas tester avec un seul programme.
-- [ ] Rédiger les tests dans un langage adapté (Python, Go, C, C++).
-- [ ] Tester avec `telnet`, `curl`, navigateur, scripts.
+### 4.3 Méthodes
+
+| Méthode | État | Remarque |
+|---|---|---|
+| `GET` | ✅ | Sert un fichier ou un dossier |
+| `POST` | ✅ | Écrit dans `upload_store` ou renvoie `403` |
+| `DELETE` | ✅ | `204` fichier, `404` absent, `403` dossier |
+| autre | ✅ | `405` + en-tête `Allow` |
+
+- [x] POST réel avec écriture dans `upload_store`.
+- [x] DELETE réel (`std::remove`, voir `DECISIONS.md` §18).
+- [x] Upload de fichiers, y compris chunked.
+- [x] `201 Created` + `Location` pour un upload réussi.
+- [x] `403` si `upload_store` est absent.
+- [x] `500` si le dossier d'upload est absent ou l'écriture échoue.
+
+> **Point d'attention :** une méthode autorisée par `allow_methods` mais non
+> implémentée ne sert jamais un fichier : le dispatcher renvoie `405`.
+
+### 4.4 Codes de statut
+
+| Code | Utilisé pour | État |
+|---|---|---|
+| `200` | Fichier servi | ✅ |
+| `201` | Upload réussi | ✅ |
+| `204` | DELETE sans corps | ✅ |
+| `301` | Dossier sans `/` final / redirection | ✅ |
+| `302` | Redirection `return` sans code | ✅ |
+| `400` | Requête malformée | ✅ |
+| `403` | Accès refusé / traversée | ✅ |
+| `404` | Fichier absent | ✅ |
+| `405` | Méthode non autorisée | ✅ |
+| `413` | Corps trop grand | ✅ |
+| `414` | URI trop longue | ✅ |
+| `431` | En-têtes trop gros | ✅ |
+| `500` | Erreur interne | ✅ (fallback) |
+| `501` | Transfer-Encoding inconnu | ✅ |
+| `502` | Réponse CGI invalide | ❌ (Sprint 5) |
+| `504` | Timeout CGI | ❌ (Sprint 5) |
+| `505` | Version HTTP | ✅ |
+
+### 4.5 Site statique
+
+- [x] `www/site1/index.html` et `www/site2/index.html`.
+- [x] MIME : HTML, CSS, JS, JSON, XML, TXT, PNG, JPEG, GIF, SVG, ICO, WEBP,
+      PDF, ZIP, TAR, GZ, MP3, MP4, WOFF, WOFF2, TTF.
+- [x] Extension inconnue → `application/octet-stream`.
+- [x] `index` multiples essayés dans l'ordre.
+- [x] Autoindex (`on`/`off`), sans `.` ni `..`.
+- [x] Redirection `301` si un dossier est demandé sans `/` final.
+
+### 4.6 Pages d'erreur
+
+- [x] Page par défaut générée si aucune n'est fournie.
+- [x] `error_page` est parsé et validé.
+- [x] Si le fichier personnalisé existe, il est servi.
+- [x] Fichier de démo `www/site1/errors/404.html` présent.
+- [x] Fallback par défaut vérifié quand le fichier personnalisé est absent.
+
+### 4.7 Keep-alive
+
+- [x] HTTP/1.1 : actif par défaut.
+- [x] HTTP/1.0 : uniquement si `Connection: keep-alive`.
+- [x] `Connection: close` ferme après la réponse.
+- [x] Deux requêtes sur la même connexion.
+- [x] Le reste du buffer est conservé après `reset()`.
+
+### 4.8 Compatibilité HTTP/1.0
+
+- [x] Requête HTTP/1.0 acceptée.
+- [x] `Host` optionnel en HTTP/1.0.
+- [ ] La réponse est toujours écrite en `HTTP/1.1`, même pour un client 1.0.
+      C'est proche de nginx et **non bloquant** pour le sujet, mais à connaître.
+
+### 4.9 `HEAD`
+
+- [ ] Non supporté : avec les configurations fournies, `HEAD` renvoie `405`.
+- Le sujet n'exige que GET, POST et DELETE ; ce n'est donc pas un manque.
 
 ---
 
-## 7. Checklist finale avant rendu
+## 5. Configuration
 
-### Compilation
-- [ ] `make` fonctionne, aucun warning
-- [ ] `make re` fonctionne
-- [ ] `make clean` fonctionne
-- [ ] `make fclean` fonctionne
-- [ ] Pas de relinking inutile
-- [ ] C++98 respecté
-- [ ] Pas de lib externe
+### 5.1 Directives
 
-### Réseau
-- [ ] Un seul `poll()`
-- [ ] Aucun `read`/`write` socket sans `poll()`
-- [ ] Aucun `errno` après `read`/`write`
-- [ ] Tous les fd sockets en `O_NONBLOCK`
-- [ ] Timeouts configurés
-- [ ] Pas de fuite fd
+| Directive | Support | Remarque |
+|---|---|---|
+| `listen [host:]port` | ✅ | `default_server` supporté |
+| `server_name` | ✅ | plusieurs noms |
+| `root` | ✅ | hérité du `server` vers la `location` |
+| `index` | ✅ | plusieurs fichiers |
+| `client_max_body_size` | ✅ | `K`/`M` acceptés |
+| `error_page` | ✅ | codes 300–599 |
+| `allow_methods` | ✅ | GET/POST/DELETE uniquement |
+| `return` | ✅ | code + URL, ou URL seule |
+| `autoindex` | ✅ | `on`/`off` |
+| `upload_store` | ✅ | utilisé par POST et DELETE |
+| `cgi_ext` | ✅ (parsé) | ❌ pas encore utilisé |
+| `cgi_pass` | ✅ (parsé) | ❌ pas encore utilisé |
 
-### Fonctionnel
-- [ ] GET fonctionne
-- [ ] POST fonctionne
-- [ ] DELETE fonctionne
-- [ ] Site statique servi
-- [ ] Upload fonctionne
-- [ ] CGI fonctionne
-- [ ] Multi-ports fonctionne
-- [ ] Pages d'erreur par défaut
-- [ ] Codes HTTP précis
+### 5.2 Validation
 
-### Robustesse
-- [ ] Pas de crash sur requêtes malformées
-- [ ] Pas de crash sur stress test
-- [ ] Valgrind clean
-- [ ] Pas de zombie
+- [x] Mots-clés inconnus refusés.
+- [x] `;` manquant refusé.
+- [x] Accolades déséquilibrées refusées.
+- [x] `server` uniquement dans `http`, `location` uniquement dans `server`.
+- [x] Un seul bloc `http`.
+- [x] Port entre 1 et 65535.
+- [x] `client_max_body_size` > 0.
+- [x] `cgi_ext` et `cgi_pass` vont ensemble.
+- [x] Doublons scalaires refusés.
+- [x] Erreurs avec numéro de ligne.
+
+### 5.3 Conflits et serveur par défaut
+
+- [x] Même `host:port` + même ensemble de `server_name` → refusé.
+- [x] Deux `default_server` sur le même port → refusé.
+- [x] Deux `location` identiques dans un `server` → refusé.
+- [x] Host inconnu → erreur de configuration avant le `bind`.
+- [x] Vhosts avec noms différents → autorisés.
+- [x] Serveur par défaut = premier `default_server`, sinon premier `server`.
+
+### 5.4 Fichiers de configuration fournis
+
+| Fichier | Rôle | État |
+|---|---|---|
+| `configs/default.conf` | Site principal, upload, redirect, CGI | ⚠️ script CGI absent |
+| `configs/demo_multi.conf` | 3 ports, autoindex | ✅ |
+| `configs/demo_vhosts.conf` | 2 vhosts sur 8080 | ✅ |
+
+**État des fichiers de démo :**
+
+- `www/site1/errors/404.html` existe et est servi ;
+- `www/site1/upload/` existe et est le `upload_store` de `default.conf` ;
+- aucun script CGI n'existe encore dans `www/site1/cgi-bin/` (Sprint 5).
+
+---
+
+## 6. Sécurité et robustesse
+
+### 6.1 Traversée de répertoire
+
+- [x] L'URI est normalisée **avant** le routage.
+- [x] `..` qui remonte au-dessus de la racine → `403`.
+- [x] `//`, `.` et `..` internes sont nettoyés.
+- [x] Autoindex n'affiche ni `.` ni `..`.
+- [x] Noms d'upload vérifiés (`/`, `\`, `.`, `..`, nom explicite vide,
+      > 255 octets, octets de contrôle).
+- [x] `%00` et les séquences `%XX` invalides refusés avec `400`.
+- [x] Écriture avec `O_NOFOLLOW` : pas de suivi de lien symbolique.
+
+### 6.2 Injection d'en-tête
+
+- [x] Caractères de contrôle (`\r`, `\n`, etc.) interdits dans l'URI → `400`.
+- [x] Les valeurs d'en-tête ne sont pas recopiées telles quelles dans la
+      réponse.
+
+### 6.3 Débordements numériques
+
+- [x] `Content-Length` : parsing manuel + détection de dépassement.
+- [x] Taille de chunk : parsing hexadécimal + détection de dépassement.
+- [x] Pas de `strtol`/`strtoul`/`atoi` pour ces valeurs.
+
+### 6.4 Mémoire
+
+- [x] `try/catch` autour de l'acceptation et du traitement d'un client.
+- [x] Un client fautif est fermé, le serveur continue.
+- [x] Tests unitaires valgrind : 0 fuite.
+- [ ] Valgrind serveur complet.
+- [ ] Test « mémoire insuffisante » (difficile à provoquer, à documenter).
+
+### 6.5 Requêtes malformées testées
+
+- [x] Ligne de requête trop longue → `414`.
+- [x] En-têtes trop gros → `431`.
+- [x] `Content-Length` énorme → `413`.
+- [x] Chunk invalide → `400`.
+- [x] URI avec caractère de contrôle → `400`.
+- [x] Version HTTP inconnue → `505`.
+- [x] Méthode inconnue → `405` (si la location a une liste).
+
+---
+
+## 7. Checklist de rendu
+
+### Partie obligatoire
+
+- [x] Réseau non bloquant, un seul `poll()`
+- [x] Configuration type nginx
+- [x] GET + site statique
+- [x] Multi-ports
+- [x] Pages d'erreur par défaut
+- [x] Pages d'erreur personnalisées
+- [x] Chunked en entrée
+- [x] Keep-alive
+- [x] POST
+- [x] DELETE
+- [x] Upload
+- [ ] CGI
+- [ ] Configs et fichiers de démo complets (CGI)
 
 ### Rendu
-- [ ] `README.md` conforme
-- [ ] Fichiers de config de démo
-- [ ] Fichiers `www/` de démo
-- [ ] Tous les fichiers à rendre présents
+
+- [x] `Makefile` complet
+- [x] C++98, pas de lib externe
+- [x] `README.md` créé (à relire)
+- [ ] `README.md` relu par un pair
+- [ ] Partie obligatoire 100 % verte
+- [ ] Soutenance blanche effectuée
+
+### Bonus (seulement après le mandatory)
+
+- [ ] Cookies / sessions
+- [ ] Deuxième type de CGI
 
 ---
 
-## 8. Tableau récapitulatif — Note 0 immédiate
+## 8. Journal des vérifications
 
-| # | Contrainte | Vérification |
-|---|-----------|--------------|
-| 1 | Crash du programme | `./webserv` + stress test |
-| 2 | `read`/`write` sans `poll()` | `grep` + audit |
-| 3 | `errno` après `read`/`write` | `grep errno` |
-| 4 | `fork` hors CGI | `grep fork` |
-| 5 | `execve` d'un serveur | `grep execve` |
-| 6 | Requête suspendue indéfiniment | test timeout |
-| 7 | Makefile non conforme | `make` + `make re` |
-| 8 | Pas de C++98 | `grep` + compilation |
-| 9 | Lib externe / Boost | `grep include` |
-| 10 | Pas de `poll()` unique | `grep poll` |
-| 11 | Pas de non-blocage | audit fd |
-| 12 | `fcntl` non autorisé (macOS) | `grep fcntl` |
-| 13 | Pas de GET/POST/DELETE | `curl` |
-| 14 | Pas de CGI | `curl` sur `.py` |
-| 15 | Pas de site statique | navigateur |
-| 16 | Pas d'upload | `curl -F` |
-| 17 | Pas de multi-ports | config + test |
-| 18 | Pas de pages d'erreur | test 404 |
-| 19 | Codes HTTP imprécis | test chaque code |
-| 20 | README non conforme | relecture |
-| 21 | Bonus sans partie obligatoire | checklist |
+| Date | Commande | Résultat |
+|---|---|---|
+| 25/10/2026 | `./test/config_tests.sh` | **105/105** |
+| 25/10/2026 | `./test_tokenizer` | **20/20** |
+| 25/10/2026 | `./test_http` | **46/46** |
+| 25/10/2026 | `./test/sprint3_tests.sh` | **27/27** |
+| 25/10/2026 | `./test/sprint4_tests.sh` | **54/54** |
+| 25/10/2026 | `valgrind ./test_http` | 0 fuite |
+| 25/10/2026 | serveur sous valgrind (POST/GET/DELETE) | 0 perte définitive/indirecte/possible |
+| 22/10/2026 | `ab -n 2000 -c 100` | 0 requête échouée |
+| 22/10/2026 | `ss -ltnp \| grep 8080` | `0.0.0.0:8080` (webserv) |
 
----
+**Note sur valgrind serveur :** le serveur n'a pas d'arrêt gracieux (SIGTERM
+par défaut). Les blocs « still reachable » à la sortie viennent donc des
+structures encore vivantes ; les pertes **definitely/indirectly/possibly**
+sont nulles.
 
-## 9. Rappels de méthode
+**Note environnement :** le service `dashboard-web.service` (PHP) avait été
+arrêté pour libérer le port 8080. Il est encore `enabled` : il reviendra après
+un redémarrage. Vérifier le port avant chaque session :
 
-- **Avant chaque commit** : relire la section 6 (transversal).
-- **Avant chaque merge dans `dev`** : relire les sections 1 à 4.
-- **Avant chaque merge dans `main`** : relire tout le fichier.
-- **Avant le rendu** : relire tout le fichier + section 7.
+```bash
+ss -ltnp | grep 8080
+```
 
 ---
 
-**Fin du fichier NOTES.md.**
+## 9. Pièges à éviter
+
+1. **Lire ou écrire une socket sans `poll()`** → note 0, même si « ça marche ».
+2. **Regarder `errno` après `recv`/`send`** → note 0.
+3. **Utiliser `F_GETFL`** → interdit par le sujet (même sous Linux).
+4. **`fork` ailleurs que dans le CGI** → note 0.
+5. **Attendre un CGI avec `waitpid` bloquant** → requête suspendue.
+6. **Laisser un pipe CGI bloquant** → tout le serveur se fige.
+7. **Oublier de dé-chunker avant le CGI** → le CGI reçoit des tailles
+   hexadécimales au lieu du corps.
+8. **Faire confiance au `Content-Length`** sans limite → `413` manquant.
+9. **Router avant de normaliser l'URI** → mauvaise `location`, faille de
+   traversée.
+10. **Modifier `sujet.fr.md`** → ce n'est pas un fichier de travail.
+
+---
+
+## 10. Résumé en une phrase
+
+> Le socle réseau, la configuration, le HTTP statique et l'upload/POST/DELETE
+> sont solides et testés ; il reste **le CGI et son script de démo** pour que
+> la partie obligatoire soit complète.

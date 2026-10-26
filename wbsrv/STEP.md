@@ -1,267 +1,318 @@
-# Plan de réalisation – Webserv (42)
+# STEP.md — Plan de réalisation Webserv
 
-> Serveur HTTP en C++98, non bloquant, un seul `poll()`, configuration type NGINX, GET/POST/DELETE, upload, CGI, multi-ports.
+> **Rôle de ce fichier : le plan de route.**
+> Il répond à trois questions : *où en est le projet ?*, *que faut-il faire
+> ensuite ?* et *comment savoir qu'une étape est vraiment terminée ?*
 >
-> **À qui s'adresse ce document :** à nous pendant le développement (quoi faire,
-> dans quel ordre, comment vérifier), et à un relecteur qui veut comprendre
-> les choix. Le **quoi-comment du code existant** vit dans `EXPLAIN.md` ;
-> ici, c'est le **plan** : objectifs, étapes, critères de sortie.
-> Les contraintes éliminatoires détaillées vivent dans `NOTES.md`.
+> Il ne raconte pas le code en détail (c'est `EXPLAIN.md`), il ne liste pas
+> toutes les règles du sujet (c'est `NOTES.md`) et il n'explique pas les
+> choix techniques (c'est `DECISIONS.md`).
+>
+> **Dernière mise à jour :** 25 octobre 2026.
+> **État général :** Sprints 1, 2, 3 et 4 terminés. Sprints 5 et 6 à faire.
 
 ---
 
-## Sommaire
+## 1. Où en est le projet ?
 
-1. [Cadrage du projet](#1-cadrage-du-projet)
-2. [Architecture logicielle](#2-architecture-logicielle)
-3. [Sprints de réalisation](#3-sprints-de-réalisation)
-   - [Sprint 1 — Socle réseau](#sprint-1--socle-réseau-terminé-✅) ✅
-   - [Sprint 2 — Configuration NGINX](#sprint-2--configuration-nginx-terminé-✅) ✅
-   - [Sprint 3 — HTTP, routage et site statique](#sprint-3--http-routage-et-site-statique)
-   - [Sprint 4 — POST, DELETE, upload et erreurs](#sprint-4--post-delete-upload-et-erreurs)
-   - [Sprint 5 — CGI](#sprint-5--cgi)
-   - [Sprint 6 — Durcissement et rendu](#sprint-6--durcissement-et-rendu)
-4. [Points critiques](#4-points-critiques)
-5. [Checklist finale](#5-checklist-finale)
-6. [Ordre conseillé et règles de passage](#6-ordre-conseillé-et-règles-de-passage)
+| Fonctionnalité | État | Preuve / remarque |
+|---|---|---|
+| Réseau non bloquant, un seul `poll()` | ✅ | 1 seul appel, `srcs/network/Server.cpp` |
+| Configuration type nginx | ✅ | `config_tests.sh` : 105/105 |
+| Multi-ports et multi-sites | ✅ | `configs/demo_multi.conf` |
+| Hôtes virtuels (`Host`) | ✅ bonus | `configs/demo_vhosts.conf` |
+| GET + site statique + MIME | ✅ | `test/sprint3_tests.sh` |
+| Keep-alive HTTP/1.1 | ✅ | 2 requêtes sur 1 connexion |
+| Chunked en entrée | ✅ | `test_http` : 46/46 |
+| Autoindex, redirections, pages d'erreur | ✅ | tests Sprint 3 |
+| **POST + upload** | ✅ | `test/sprint4_tests.sh` : 54/54 |
+| **DELETE** | ✅ | `204`, `404`, `403` testés |
+| **Pages d'erreur personnalisées** | ✅ | `www/site1/errors/404.html` |
+| **CGI** | ❌ à faire | Sprint 5 |
+| **README.md** | ✅ créé | à relire (anglais, logins) |
+| Stress test complet + valgrind serveur | ⚠️ partiel | tests unitaires valgrind OK |
+| Configs et fichiers de démo complets | ⚠️ partiel | il manque un script CGI |
+
+**Conclusion :** GET, POST, DELETE et l'upload sont terminés et testés.
+Il reste le **CGI** (Sprint 5), puis le durcissement final (Sprint 6).
+
+---
+
+## 2. Les règles à ne jamais casser
+
+Ces règles sont détaillées dans `NOTES.md`. Un rappel rapide suffit ici :
+
+| Règle | Conséquence si on la casse |
+|---|---|
+| Un seul `poll()` pour toutes les E/S réseau | note 0 |
+| Jamais de `recv`/`send` sans disponibilité `poll()` | note 0 |
+| Jamais d'`errno` pour piloter après `read`/`write` | note 0 |
+| `fork` uniquement pour le CGI | note 0 |
+| Aucun crash, même en cas de mauvaise requête | note 0 |
+| C++98, `-Wall -Wextra -Werror`, pas de lib externe | note 0 |
+| Aucune requête suspendue indéfiniment | note 0 |
+| `fcntl` : uniquement `F_SETFL`, `O_NONBLOCK`, `FD_CLOEXEC` | note 0 |
 
 **Règle de passage :** on ne commence un sprint que si le précédent est vert
-(suite de tests + critères de sortie). Relire `NOTES.md` avant chaque commit.
+(build + tests + critères de sortie).
 
 ---
 
-## 1. Cadrage du projet
-
-### 1.1 Objectif (ce que le serveur saura faire à la fin)
-
-- Servir un **site statique** (HTML, CSS, JS, images) dans un vrai navigateur.
-- Gérer **GET, POST, DELETE** + **upload** de fichiers.
-- Exécuter du **CGI** (au moins un : Python…).
-- Être **non bloquant** avec **un seul `poll()`** pour toutes les E/S réseau.
-- Écouter sur **plusieurs ports** (et plusieurs noms par port).
-- Se configurer par **fichier type NGINX** (`./webserv [fichier.conf]`).
-
-### 1.2 Contraintes obligatoires (imposées par le sujet, zéro négociable)
-
-| Contrainte | Détail | Où c'est surveillé |
-|---|---|---|
-| Langage / flags | C++98, `-Wall -Wextra -Werror -std=c++98` | `Makefile`, à chaque build |
-| Libs | aucune externe, pas de Boost | `Makefile` (aucun `-l`), includes |
-| `poll()` | **un seul**, pour toutes les E/S réseau (écoute incluse) | `grep poll(` → 1 seul appel |
-| `read`/`write` | jamais sans disponibilité `poll()` sur sockets/pipes | audit + revue |
-| `errno` | interdit pour piloter après `read`/`write` | `grep errno` (messages de setup OK) |
-| `fork` | uniquement pour le CGI | `grep fork` → `CgiHandler` seul (S5) |
-| Robustesse | aucun crash, même sans mémoire | gardes `try/catch`, stress tests |
-| Requête suspendue | interdite | timeouts 60 s / 5 s / 10 s (S3/S5) |
-| HTTP | codes précis + pages d'erreur par défaut | S3/S4 |
-| `fcntl` (macOS) | `F_SETFL`, `O_NONBLOCK`, `FD_CLOEXEC` uniquement | `utils.cpp` |
-
-### 1.3 Préparation (à faire avant de coder)
-
-1. Lire HTTP/1.0 (référence suggérée) + HTTP/1.1 (navigateurs) ; RFC 3875 pour le CGI.
-2. Manipuler `telnet`, `curl`, `nc`, un navigateur ; comparer chaque comportement à **NGINX** (`nginx -t` + serveur réel).
-3. Fiches `man` : `socket bind listen accept poll setsockopt fcntl` (S1), `fork execve pipe dup2` (S5).
-
-### 1.4 IA : règles d'usage (exigées par le sujet, traçées dans le `README`)
-
-- L'IA structure, propose, génère des squelettes — **chaque ligne est relue, testée et comprise**.
-- Validation par un pair avant intégration ; jamais de copier-coller aveugle.
-
----
-
-## 2. Architecture logicielle
-
-### 2.1 Vue d'ensemble (le programme en un schéma)
+## 3. Architecture en un coup d'œil
 
 ```
-fichier.conf ──▶ Config ──▶ vector<ServerConfig> ──▶ matchLocation(uri)
-                                                        (plus long préfixe)
-Server (boucle poll unique) ◀── ces configs
-    ├── map<fd, Listener>  : UNE socket par host:port + configs ([0] = défaut)
-    └── map<fd, Connection*> : 1 client = buffers + états (+ Request/Response S3+)
+fichier .conf
+    │
+    ▼
+Config ──► vector<ServerConfig> ──► Server
+                                      │
+                                      ├── Listener : une socket par host:port
+                                      └── Connection : un client = buffers + états
+                                                │
+                                                ├── Request  : analyse HTTP
+                                                └── Response : construit la réponse
+
+Une seule boucle : poll() → accepter / lire / écrire / fermer
 ```
 
-Déroulé d'une connexion : `main(argv)` → `Config(path)` → `Server(configs)` → `run()` → `poll()` → listener prêt ? `accept` → client `POLLIN` ? `recv` → réponse prête ? `send` → fini/erreur ? fermeture différée.
+Pour le détail du code, voir `EXPLAIN.md`.
 
-### 2.2 Rôle des classes (fiches complètes dans `EXPLAIN.md`)
+---
 
-| Classe | Rôle en une phrase | Sprint |
-|---|---|---|
-| `Socket` | 1 socket d'écoute (`host:port`), `accept()` non bloquant | 1 (+ host S2) |
-| `Connection` | 1 client : buffers + états, E/S sous `poll()` uniquement | 1 (+ `Request` S3) |
-| `Server` | **unique `poll()`**, partage des sockets, dispatch, gardes OOM | 1 (vhosts S2) |
-| `ConfigFileTokenizer` | texte → `Token{text,line,type}`, ouverture sécurisée | 2 |
-| `validateSyntax` | grammaire `http{server{...}}` **avant** stockage | 2 |
-| `Config` / `ServerConfig` / `LocationConfig` | stockage typé + héritage + `matchLocation` | 2 |
-| `checkServerConflicts` / `markDefaultServers` | conflits + gagnant par port | 2 |
-| `ConfigError` | `Config error: ...` + exit 1, jamais de crash | 2 |
-| `Request` / `Response` | parse HTTP / construit HTTP (fichier, MIME, keep-alive) | 3 (+ 4/5) |
-| `CgiHandler` | `fork`+`execve`+pipes non bloquants dans le `poll()` | 5 |
+## 4. Les sprints
 
-### 2.3 Machine à états d'une `Connection` (fil conducteur S1 → S5)
+### Sprint 1 — Socle réseau ✅ TERMINÉ
+
+**Objectif :** prouver le modèle non bloquant avec un seul `poll()`.
+
+**Ce qui est fait :**
+- `Socket` : `socket`, `SO_REUSEADDR`, `bind`, `listen(128)`, non bloquant.
+- `Connection` : `recv` sous `POLLIN`, `send` sous `POLLOUT`, fermeture propre.
+- `Server` : tableau `pollfd`, acceptation des clients, fermetures différées.
+- `main` : `SIGPIPE` ignoré, argument de configuration.
+
+**Critères de sortie :** `curl` répond, requête fragmentée acceptée, serveur
+vivant sous charge. **Vérifié.**
+
+**Pièges :** lire/écrire sans `poll()` ; utiliser `errno` après une E/S.
+
+---
+
+### Sprint 2 — Configuration nginx ✅ TERMINÉ
+
+**Objectif :** lire un fichier type nginx et construire des structures fiables.
+
+**Ce qui est fait :**
+- Tokenizer avec numéros de ligne, commentaires, quotes, BOM, CRLF.
+- Validation de la grammaire **avant** de stocker quoi que ce soit.
+- `Config`, `ServerConfig`, `LocationConfig` avec héritage des valeurs.
+- Détection des conflits et choix du serveur par défaut.
+- Multi-ports et hôtes virtuels (une socket partagée par `host:port`).
+
+**Critères de sortie :** `config_tests.sh` 105/105, `test_tokenizer` 20/20,
+démarrage sur plusieurs ports. **Vérifié.**
+
+---
+
+### Sprint 3 — HTTP, routage et site statique ✅ TERMINÉ
+
+**Objectif :** remplacer la réponse codée en dur par un vrai serveur HTTP.
+
+**Ce qui est fait :**
+- `Request` : ligne de requête, en-têtes, corps, `Content-Length`, chunked.
+- Limites : ligne/URI 8 Ko → 414, en-têtes 8 Ko → 431, corps → 413.
+- `Response` : fichiers, MIME, redirections, pages d'erreur, autoindex.
+- Routage par plus long préfixe, `root`/`index`/`autoindex`.
+- `Host` pour choisir le bon site (vhosts).
+- Keep-alive et timeout d'inactivité de 60 s.
+- Protection contre `..` et normalisation **avant** le routage.
+
+**Corrections de conformité déjà appliquées :**
+- `fcntl(F_GETFL)` remplacé par `fcntl(F_SETFL, O_NONBLOCK)`.
+- `listen 8080;` binde maintenant `0.0.0.0` (flag `AI_PASSIVE`).
+- `strtol`/`strtoul` remplacés par un parsing manuel avec contrôle de débordement.
+- Limite 8 Ko vérifiée même si tout arrive dans un seul paquet.
+- Caractères de contrôle interdits dans l'URI (pas d'injection d'en-tête).
+- Autoindex : `..` n'est plus affiché.
+
+**Critères de sortie :** navigateur OK, keep-alive OK, `/siteB/../index.html`
+routé correctement, tests Sprint 3 verts. **Vérifié (sauf 1 test lié à un
+fichier HTML modifié localement, voir §7).**
+
+---
+
+### Sprint 4 — POST, DELETE, upload et pages d'erreur ✅ TERMINÉ
+
+**Objectif :** terminer tout le fonctionnel hors CGI.
+
+**Ce qui est fait :**
+- dispatcher explicite `GET` / `POST` / `DELETE` ; autre méthode → `405` +
+  `Allow` ;
+- POST écrit le corps déjà dé-chunké dans `<upload_store>/<nom>` ;
+- nom explicite ou généré `upload_<timestamp>_<sequence>` ;
+- validation stricte des noms (`/`, `\`, `..`, vide, > 255 octets, contrôles) ;
+- écriture robuste `open`/`write`/`close` avec `O_NOFOLLOW` et mode `0644` ;
+- succès upload → `201 Created` + `Location` ré-encodée ;
+- absence de `upload_store` → `403` ; erreur disque → `500` ;
+- DELETE : `204 No Content` (sans `Content-Length`), `404` si absent, `403`
+  si dossier ou échec ;
+- décodage `%XX` de l'URI avant normalisation, comme nginx ;
+- page `www/site1/errors/404.html` et dossier `www/site1/upload/` livrés ;
+- `configs/default.conf` mis à jour (`GET POST DELETE` + upload local).
+
+**Critères de sortie :** `test/sprint4_tests.sh` **54/54**, `test_http`
+**46/46**, `config_tests.sh` **105/105**, Sprint 3 **27/27**. **Vérifié.**
+
+**Démo navigateur :** `www/site1/upload_demo.html`, liée depuis la page d'accueil,
+regroupe les vérifications des Sprints 1 à 4 (12 requêtes parallèles, keep-alive,
+redirection, 403/404/413/414/431, traversal, MIME, upload, DELETE, 405) et un
+bouton « Lancer toute la suite » (14/14 dans Chromium headless).
+
+**Pièges évités :** écriture hors `upload_store`, noms `..` encodés, `%00`,
+corps trop gros, dossier supprimé, lien symbolique suivi.
+
+---
+
+### Sprint 5 — CGI ❌ À FAIRE
+
+**Objectif :** exécuter au moins un CGI (Python) avec `fork` + `execve`,
+sans bloquer et sans zombie.
+
+**Étapes :**
+
+1. **Créer `CgiHandler`**
+   - Deux pipes non bloquants (`in` et `out`).
+   - `fork()`.
+   - Enfant : `dup2` sur stdin/stdout, `chdir` dans le dossier du script,
+     `execve(binaire, [binaire, script], envp)`, échec → `_exit(127)`.
+   - Parent : écrire le corps sous `POLLOUT`, lire sous `POLLIN`,
+     `waitpid(WNOHANG)`.
+
+2. **Brancher les pipes dans l'unique `poll()`**
+   - `Server::buildPollFds()` doit surveiller aussi les descripteurs CGI.
+
+3. **Remplir l'environnement CGI/1.1**
+   - `REQUEST_METHOD`, `QUERY_STRING`, `CONTENT_LENGTH`, `CONTENT_TYPE`,
+     `SCRIPT_NAME`, `SCRIPT_FILENAME`, `PATH_INFO`, `SERVER_PROTOCOL`,
+     `SERVER_NAME`, `SERVER_PORT`, `GATEWAY_INTERFACE`, `SERVER_SOFTWARE`,
+     et les variables `HTTP_*`.
+
+4. **Lire la réponse CGI**
+   - `Status:`, `Content-Type`, `Location`.
+   - Pas de `Content-Length` → lire jusqu'à EOF.
+   - Réponse malformée → `502`.
+
+5. **Timeout 10 s**
+   - `kill(SIGKILL)` puis `waitpid`.
+   - Répondre `502` ou `504`, sans zombie.
+
+**Fichiers à créer :** `includes/cgi/CgiHandler.hpp`,
+`srcs/cgi/CgiHandler.cpp`, `www/site1/cgi-bin/*.py`, `configs/cgi.conf`.
+**Fichiers à modifier :** `Server.cpp`, `Connection.cpp`, `Makefile`.
+
+**Critères de sortie :** `curl` GET et POST vers le CGI, CGI lent tué,
+serveur toujours vivant, aucun zombie.
+
+**Pièges :** `fork` ailleurs que dans le CGI = 0 ; pipe bloquant = 0 ;
+`waitpid` bloquant = requête suspendue.
+
+---
+
+### Sprint 6 — Durcissement et rendu ⚠️ À FAIRE
+
+**Objectif :** zéro faute éliminatoire et dossier de soutenance prêt.
+
+1. **Stress et robustesse**
+   - `ab -n 10000 -c 100`, clients lents, requêtes malformées.
+   - `valgrind` sur le serveur.
+   - Vérifier `/proc/PID/fd` (pas de fuite) et l'absence de zombie.
+
+2. **Démos**
+   - Une config par fonctionnalité : upload, redirect, CGI, erreurs, autoindex.
+   - Des fichiers `www/` pour chaque démo.
+
+3. **README.md**
+   - Ligne 1 en italique avec les logins.
+   - Sections `Description`, `Instructions`, `Resources`.
+   - Usage de l'IA documenté honnêtement.
+
+4. **Bonus (seulement si tout le mandatory est vert)**
+   - Cookies/sessions et/ou deuxième type de CGI.
+
+**Critères de sortie :** checklist `NOTES.md` entièrement verte, soutenance
+blanche avec un pair.
+
+---
+
+## 5. Ordre conseillé
 
 ```
-PARSING_REQUEST_LINE → PARSING_HEADERS → PARSING_BODY → READY_TO_PROCESS
-   (S1 ✅ actif)        (S3)               (S3)             (S3)
-                                                        │
-                      BUILDING_RESPONSE ←─────────────────┘
-                      (fichier S3 / redirect+upload S4 / CGI S5 / erreur)
-                                │
-                        SENDING_RESPONSE → CLOSING (ou keep-alive → retour parse, S3)
+Sprint 1 ✅ → Sprint 2 ✅ → Sprint 3 ✅ → Sprint 4 ✅ → Sprint 5 → Sprint 6
 ```
 
----
-
-## 3. Sprints de réalisation
-
-*Modèle de chaque sprint : **Objectif** (1 phrase) → **Pourquoi maintenant** → **Étapes** (faire + vérifier) → **Fichiers** → **Sortie** (critères mesurables) → **Pièges** (ce qui vaut 0).*
-
----
-
-### Sprint 1 — Socle réseau (TERMINÉ ✅)
-
-**Objectif :** prouver le modèle non bloquant : 1 seul `poll()`, `accept` + réponse HTTP minimale.
-
-**Étapes :**
-1. `Socket` : `socket` → `SO_REUSEADDR` → `bind` → `listen(128)` → `O_NONBLOCK` ; `accept()` + client en non-bloquant (`-1` sans jeter si rien à accepter).
-   → vérifier : `man 2 socket`, pas de fuite fd si une étape jette.
-2. `Connection` : `recv` sous `POLLIN` → buffer → parse request-line tolérant au découpage TCP ; `send` sous `POLLOUT` ; `CLOSING` sinon (jamais `errno`).
-   → vérifier : `test/fragment_test.py` (requête envoyée en 2 morceaux).
-3. `Server` : `buildPollFds()` (listeners `POLLIN`, clients `POLLIN`+`POLLOUT` si réponse en attente), boucle `poll(...,1000)`, fermetures différées `_toClose`.
-   → vérifier : `grep poll(` = 1 seul appel ; nouveau client servi pendant qu'un autre reçoit.
-4. `main` : `SIGPIPE` ignoré, port en dur (provisoire, S2 le remplace).
-
-**Fichiers :** `includes/network/*`, `srcs/network/*`, `srcs/utils/*`.
-**Sortie :** `curl :8080/` → `200 Hello`, fragmentation OK, pas de crash.
-**Pièges :** E/S sans `poll()` = 0 ; `errno` après E/S = 0.
+**Règles :**
+- Ne pas passer au sprint suivant si les tests du sprint courant échouent.
+- Relire `NOTES.md` avant chaque commit.
+- Mettre `EXPLAIN.md` à jour après chaque sprint.
+- Ne jamais ajouter un bonus avant d'avoir terminé le mandatory.
 
 ---
 
-### Sprint 2 — Configuration NGINX (TERMINÉ ✅)
+## 6. Checklist finale
 
-**Objectif :** `./webserv [conf]` multi-sites/multi-ports, validation plus stricte que `nginx -t` là où le sujet l'exige.
+### Compilation
+- [x] `make` sans warning
+- [x] `make re` fonctionne
+- [x] `make clean` / `make fclean`
+- [x] Pas de relink inutile
+- [x] C++98 respecté
+- [x] Aucune lib externe
 
-**Pourquoi maintenant :** tout le fonctionnel (routage, upload, CGI) lit la config ; la figer tôt évite de tout recâbler.
+### Réseau
+- [x] Un seul `poll()`
+- [x] Aucune E/S socket sans `poll()`
+- [x] Aucun `errno` après `read`/`write`
+- [x] Sockets non bloquants
+- [x] Timeout d'inactivité de 60 s
+- [ ] Test de fuite de descripteurs
 
-**Étapes :**
-1. **Tokenizer** (`ConfigFileTokenizer`) : texte → `Token{text,line,type}` (`KEYWORD` = 1er mot après `;`/`{`/`}`), une passe (`#`, quotes avec `;`/`#` littéraux, `""` → valeur vide explicite, BOM, CRLF), ouverture sécurisée (inexistant → `cannot open`, dossier → `cannot read`, vide = 0 token), zéro `new`, C++98.
-   → vérifier : `make test-tokenizer` (20 assertions).
-2. **Grammaire avant données** (`validateSyntax`) : `http { server { ... location ... } }`, whitelist stricte (+ `autoindex`, `upload_store` documentés), `;` obligatoire, accolades équilibrées, placements (`server`⊂`http`, `location`+chemin⊂`server`). Erreurs `config: line N: ...`.
-   → vérifier : batterie §"validateur" de `config_tests.sh` + comparaison `nginx -t`.
-3. **Stockage typé** (`parseServer`/`parseLocation`) : `listen` chiffres-only 1-65535 + host validé (`*`/vide→`0.0.0.0`, `localhost`→`127.0.0.1`, `foo!!!` rejeté) + flag `default_server` ; `server_name` 1..N ; `root`/`index` 1..N ; `client_max_body_size` > 0 + `K`/`M` (décimal manuel anti-overflow) ; `error_page` codes 300-599 ; `allow_methods` **UNIQUEMENT** `GET/POST/DELETE` ; `return` 3 formes + cible validée ; `autoindex` ; `upload_store` ; `cgi_ext` 1..N + `cgi_pass` unique appariés ; doublon scalaire → exception ; valeurs `""` rejetées.
-   → vérifier : `make test-config` (dump des valeurs *effectives*).
-4. **Héritage** (`resolveInheritance`, fin de bloc) : location sans `root`/`index`/`maxBody` ← server, sinon défauts (`.`, `index.html`, 1 Mo). Le Sprint 3 ne gérera plus jamais le cas « non défini ».
-5. **Conflits + défaut** (`checkServerConflicts` pure/`markDefaultServers` mutatrice) : même port + mêmes noms → stop ; double `default_server` → stop ; hosts résolus (`Config error`, jamais `Fatal`) ; gagnant = 1er explicite sinon 1er déclarant.
-6. **Réseau** : `Socket(config,host,port)` via `getaddrinfo` ; `Listener` par `host:port` partagé (gagnant en tête, `std::list` aux adresses stables) ; `Connection` pointe vers la config du défaut ; `main` inchangé (tout échec = `Config error` **avant** `bind`) ; `poll(&fds[0])`, `c_str()`, conversions `ostringstream` (zéro `memset`/`snprintf`/`strtol`, hors liste du sujet).
+### Fonctionnel
+- [x] GET
+- [x] POST
+- [x] DELETE
+- [x] Site statique
+- [x] Upload
+- [ ] CGI
+- [x] Multi-ports
+- [x] Pages d'erreur par défaut
+- [x] Pages d'erreur personnalisées
+- [x] Codes HTTP précis (cas implémentés)
 
-**Fichiers :** `includes/config/*`, `srcs/config/*`, `configs/*.conf`, `www/site1|site2/`, `test/config_tests.sh`, `test/test_tokenizer.cpp`, `test/test_config.cpp`, cibles `make test-tokenizer`/`test-config`.
-**Sortie :** `config_tests.sh` **105/105**, `test_tokenizer` 20/20, `curl :8080/` + `:8081/` (`demo_multi`), 1 socket pour 2 noms (`demo_vhosts`), valgrind 0/0.
-**Pièges :** `fork` toujours absent ; la liste des fonctions est auditée (§4.2 d'`EXPLAIN.md`).
-
-**Comment rejouer :** `make re && ./test/config_tests.sh`.
-
----
-
-### Sprint 3 — HTTP, routage et site statique
-
-**Objectif :** remplacer la réponse hardcodée par un vrai couple `Request`/`Response` : servir `www/` dans un navigateur avec keep-alive.
-
-**Pourquoi maintenant :** upload, CGI et erreurs dépendent tous du parsing et du routage.
-
-**Étapes :**
-1. **`Request`** (`includes/http/Request.hpp`, `srcs/http/Request.cpp`) : machine à états alimentée par octets (`append()` + `parse()`), sans bloquer —
-   request-line 3 tokens sinon `400` ; headers jusqu'à la ligne vide (noms en minuscules, 8 Ko max sinon `431/400`) ; body (`chunked` dé-chunké avec tailles hexa, sinon `Content-Length`, contradictions → `400`) ; dépassement de la limite effective (location sinon server) → `413` en continuant à lire ; version 1.0/1.1 (autre → `505`), `Host` obligatoire en 1.1 ; URI 8 Ko max (`414`), séparer `path`/`?query`.
-   → vérifier : requêtes送 découpées, `curl -v` des codes.
-2. **Routage** (`Connection` + `matchLocation` existant) : plus long préfixe → location ; `root` effectif ; chemin disque = `root + path` nettoyé des `.`/`..` (**jamais** hors root → `403`) ; méthode non listée → `405` + `Allow`. Choisir la config du vhost via `Host` (défaut sinon — §3.5 d'`EXPLAIN.md`).
-   → vérifier : deux noms, un port, contenus différents selon `Host`.
-3. **`Response` fichiers** : `stat()` → répertoire : essayer `index[]` dans l'ordre, sinon `403/404` (listing = S4) ; fichier : lecture par blocs disque (hors `poll()`, autorisé), table MIME + `Content-Length` exact.
-   → vérifier : navigateur (HTML+CSS+images+JS, console propre).
-4. **Keep-alive + timeouts** : HTTP/1.1 gardé (sauf `Connection: close`), 1.0 fermé ; reset buffers → retour au parse ; inactivité 60 s / keep-alive 5 s → `CLOSING` balayé à chaque tour (jamais de requête suspendue).
-   → vérifier : 2 requêtes sur 1 connexion → 2 réponses ; `telnet` partiel → fermeture, serveur vivant.
-
-**Fichiers :** créer `Request.{hpp,cpp}`, `Response.{hpp,cpp}`, `Mime.{hpp,cpp}` (ou table interne) ; modifier `Connection` (états + reset), `Server.cpp` (balayage timeouts), `Makefile` (`includes/http` déjà listé).
-**Sortie :** `curl -v` 200 + bons headers, navigateur OK, keep-alive OK, timeout OK, `fragment_test.py` vert.
-**Pièges :** `read` sans `POLLIN` = 0 ; `errno` après E/S = 0 ; `Host`+`Content-Length` exacts exigés par les navigateurs.
+### Rendu
+- [x] `README.md` créé (à relire)
+- [ ] Configs de démo complètes
+- [ ] Fichiers `www/` de démo complets
+- [ ] Partie obligatoire 100 % verte
 
 ---
 
-### Sprint 4 — POST, DELETE, upload et erreurs
+## 7. Commandes utiles
 
-**Objectif :** finir tout le fonctionnel hors CGI.
+```bash
+make re                       # build strict
+./test/config_tests.sh        # 105 tests de configuration
+make test-tokenizer && ./test_tokenizer   # 20 tests tokenizer
+make test-config && ./test_config configs/default.conf
+make test-http && ./test_http             # 46 tests HTTP
 
-**Étapes :**
-1. **Redirections** : location `hasRedirect()` → statut + `Location:` (absolutiser `/...` avec `Host` comme nginx mesuré ; vide si pas d'URL, comme nginx).
-   → vérifier : `curl -v :8080/redirect` → `301`.
-2. **POST/upload** : `POST` + `upload_store` → corps dé-chunké écrit sous `<store>/<nom assaini>` (pas de `/` ni `..`), `201` + `Location` ; sans `upload_store` → `403` ; `405` si méthode non listée. Corps brut accepté (`--data-binary`) ; multipart seulement si temps.
-   → vérifier : fichier identique octet pour octet.
-3. **DELETE** : `unlink()` du fichier mappé (dossier → `403`, absent → `404`, non listé → `405`), `200`/`204`.
-   → vérifier : `curl -X DELETE` → `200` puis `404`.
-4. **Listing** : dossier sans `index` + `autoindex on` → HTML généré (`opendir`/`readdir`, `.`/`..` exclus) ; `off` → `403`.
-   → vérifier : `:8081/` liste, `:8080/privé/` → `403`.
-5. **Erreurs** : table `error_pages` (fichier relatif au `root`) sinon page défaut ; couvrir `400 403 404 405 413 414 500`.
-   → vérifier : custom si configurée, défaut sinon.
+./webserv configs/default.conf &
+curl -i http://localhost:8080/
+./test/sprint3_tests.sh
+./test/sprint4_tests.sh
 
-**Fichiers :** `Response.cpp` (+ dispatch `Connection`), `www/` (dossier listable/non listable), `configs/` par feature.
-**Sortie :** les 5 × `curl` ci-dessus verts.
-**Pièges :** écriture disque hors `poll()` OK ; `errno` autorisé pour *diagnostiquer* un `open` disque, jamais pour piloter le réseau ; jamais de `..` hors root.
+# Vérifier que le port 8080 est libre
+ss -ltnp | grep 8080
+```
 
----
-
-### Sprint 5 — CGI
-
-**Objectif :** au moins un CGI (Python `.py`), `fork`+`execve`+pipes **dans l'unique `poll()`**.
-
-**Pourquoi en avant-dernier :** dépend de `Request` (body, query) et `Response` (statuts dynamiques) ; seul endroit où `fork` est autorisé.
-
-**Étapes :**
-1. **`CgiHandler`** : extension dans `location.getCgi()` → `pipe(in)`+`pipe(out)` en `O_NONBLOCK` → `fork()` → enfant : `dup2` stdin/stdout, `chdir` dossier du script, `execve(binaire,[binaire,script],envp)`, échec → `_exit(127)` → parent : écrit le body sous `POLLOUT`, lit jusqu'à EOF sous `POLLIN`, `waitpid(WNOHANG)` (jamais bloquant, zéro zombie).
-   → vérifier : `grep "fork\|execve" srcs/` → `CgiHandler.cpp` seul.
-2. **Environnement CGI/1.1** (RFC 3875) : `REQUEST_METHOD QUERY_STRING CONTENT_LENGTH CONTENT_TYPE SCRIPT_NAME SCRIPT_FILENAME PATH_INFO SERVER_PROTOCOL SERVER_NAME SERVER_PORT GATEWAY_INTERFACE SERVER_SOFTWARE` + `HTTP_*` ; chunked déjà dé-chunké (EOF net pour le CGI).
-3. **Réponse** : headers CGI (`Status:`, `Content-Type:`, `Location:`) ; sans `Content-Length` → lire jusqu'à EOF ; `Status:` absent → `200` ; malformé → `502`.
-4. **Timeout 10 s** : `kill(SIGKILL)` + `waitpid` + `502/504`.
-   → vérifier : `curl` GET+POST exacts, CGI lent tué sans zombie, serveur vivant.
-
-**Fichiers :** créer `CgiHandler.{hpp,cpp}`, `www/cgi-bin/*.py`, `configs/cgi.conf` ; modifier `Server.cpp` (pipes dans `buildPollFds`), `Connection` (`WAITING_CGI`).
-**Sortie :** les 4 vérifications ci-dessus vertes.
-**Pièges :** `fork` ailleurs = 0 ; `execve` d'un serveur = 0 ; pipe bloquant = 0 ; `errno` après E/S pipe = 0 ; `waitpid` bloquant = requête suspendue.
-
----
-
-### Sprint 6 — Durcissement et rendu
-
-**Objectif :** zéro faute éliminatoire + dossier de soutenance (bonus seulement si tout est vert).
-
-**Étapes :**
-1. **Stress & robustesse** : `ab -n 10000 -c 100`, `siege`, malformées/`telnet` lents, `valgrind` 0/0, pas de fuite fd (`/proc/PID/fd`), pas de zombie ; timeouts 60/5/10 re-vérifiés.
-2. **Démos** : une config par feature (`upload`, `redirect`, `cgi`, `error_pages`…) + `www/` assorti : chaque ligne du sujet démontrable en < 30 s.
-3. **`README.md` (anglais, exigé)** : ligne 1 italique `*This project has been created as part of the 42 curriculum by <logins>*`, sections `Description` / `Instructions` / `Resources` (+ usage IA honnête).
-4. **Bonus (si 100 % obligatoire)** : cookies/sessions et/ou 2e CGI — toute E/S repasse par l'unique `poll()`.
-
-**Sortie :** `NOTES.md` §7 entièrement coché + soutenance blanche avec un pair.
-
----
-
-## 4. Points critiques (rappel — détail et preuves dans `NOTES.md`)
-
-1. **Crash = 0**, même sans mémoire (gardes serveur, `ConfigError` config).
-2. **Un seul `poll()`**, `POLLIN`+`POLLOUT`, aucune E/S socket/pipe sans disponibilité.
-3. **Pas d'`errno`** après `read`/`write` pour piloter.
-4. **`fork`/`execve`** : `CgiHandler.cpp` seul (S5).
-5. **C++98 strict**, pas de Boost/externes, fonctions de la liste (§4.2 d'`EXPLAIN.md`).
-6. **Aucune requête suspendue** (60/5/10 s).
-7. **Codes précis + pages par défaut**, statique complet, GET/POST/DELETE, upload, CGI, multi-ports, navigateur OK.
-
-## 5. Checklist finale
-
-- [ ] `make`, `make re`, `clean`, `fclean` sans relink ni warning
-- [ ] GET / POST / DELETE / upload / CGI / multi-ports+Host / redirect / autoindex / error pages
-- [ ] Navigateur OK, `curl`+`telnet` OK, écarts nginx documentés
-- [ ] Stress OK, malformées OK, valgrind OK, pas de zombie/fuite fd
-- [ ] `README.md` conforme, configs + `www/` démo, `NOTES.md` §7 coché
-- [ ] `git status` propre (artefacts ignorés : `.build/ webserv test_tokenizer test_config`)
-
-## 6. Ordre conseillé et règles de passage
-
-1. **Sprint 1** ✅ socle `poll()` → 2. **Sprint 2** ✅ config → 3. **Sprint 3** HTTP/keep-alive → 4. **Sprint 4** POST/DELETE/erreurs → 5. **Sprint 5** CGI → 6. **Sprint 6** stress + README (+ bonus).
-- Vert exigé avant d'avancer (`config_tests.sh` + critères du sprint).
-- `NOTES.md` avant chaque commit, `EXPLAIN.md` après chaque sprint.
+**Note locale :** `www/site1/index.html` contient bien le tiret cadratin
+attendu par le test Sprint 3. Ne pas le remplacer par des espaces.

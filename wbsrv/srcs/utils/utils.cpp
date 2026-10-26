@@ -1,15 +1,9 @@
 #include <fcntl.h>
-#include <unistd.h>
-#include <cerrno>
-#include <string>
-#include <stdexcept>
-#include "Socket.hpp"
 #include "utils.hpp"
 
+// Contrainte sujet : fcntl() n'est autorisé qu'avec F_SETFL, O_NONBLOCK
+// et FD_CLOEXEC. F_GETFL est donc interdit : on pose directement le flag.
 bool setNonBlocking(int fd)
 {
-    int flags = fcntl(fd, F_GETFL, 0);
-    if (flags == -1)
-        return false;
-    return (fcntl(fd, F_SETFL, flags | O_NONBLOCK) != -1);
+    return (fcntl(fd, F_SETFL, O_NONBLOCK) != -1);
 }

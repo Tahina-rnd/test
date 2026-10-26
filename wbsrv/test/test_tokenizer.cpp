@@ -51,9 +51,34 @@ static void dump(const std::vector<Token>& toks)
 			<< std::endl;
 }
 
-int main()
+static void checkToken(const std::vector<Token>& t, std::size_t i,
+	const std::string& text, int line, TokenType type,
+	const std::string& desc)
 {
-	// 1. Découpage de base : types + lignes + séparateurs collés.
+	if (i >= t.size())
+	{
+		check(false, desc + " (token absent)");
+		return;
+	}
+	check(t[i].text == text && t[i].line == line && t[i].type == type, desc);
+}
+
+static void checkBasicTokens(const std::vector<Token>& t)
+{
+	check(t.size() == 9, "9 tokens");
+	checkToken(t, 0, "server", 1, T_KEYWORD, "server KEYWORD l1");
+	checkToken(t, 1, "{", 1, T_OPEN_BRACE, "{ l1");
+	checkToken(t, 2, "listen", 2, T_KEYWORD, "listen KEYWORD l2");
+	checkToken(t, 3, "8080", 2, T_VALUE, "8080 VALUE l2");
+	checkToken(t, 4, ";", 2, T_SEMICOLON, "; l2 (collé + commentaire ignoré)");
+	checkToken(t, 5, "root", 3, T_KEYWORD, "root KEYWORD l3");
+	checkToken(t, 6, "/tmp/my dir", 3, T_VALUE, "quote avec espace");
+	checkToken(t, 7, ";", 3, T_SEMICOLON, "; l3");
+	checkToken(t, 8, "}", 4, T_CLOSE_BRACE, "} l4");
+}
+
+static void testBasicTokenization()
+{
 	writeFile("/tmp/tok1.conf",
 		"server {\n"
 		"  listen 8080;# commentaire\n"
@@ -65,23 +90,17 @@ int main()
 		const std::vector<Token>& t = tz.getTokens();
 		std::cout << "-- test 1 : découpage --" << std::endl;
 		dump(t);
-		check(t.size() == 9, "9 tokens");
-		check(t[0].text == "server" && t[0].line == 1 && t[0].type == T_KEYWORD, "server KEYWORD l1");
-		check(t[1].text == "{" && t[1].line == 1 && t[1].type == T_OPEN_BRACE, "{ l1");
-		check(t[2].text == "listen" && t[2].line == 2 && t[2].type == T_KEYWORD, "listen KEYWORD l2");
-		check(t[3].text == "8080" && t[3].line == 2 && t[3].type == T_VALUE, "8080 VALUE l2");
-		check(t[4].text == ";" && t[4].line == 2 && t[4].type == T_SEMICOLON, "; l2 (collé + commentaire ignoré)");
-		check(t[5].text == "root" && t[5].line == 3 && t[5].type == T_KEYWORD, "root KEYWORD l3");
-		check(t[6].text == "/tmp/my dir" && t[6].line == 3 && t[6].type == T_VALUE, "quote avec espace");
-		check(t[7].text == ";" && t[7].line == 3 && t[7].type == T_SEMICOLON, "; l3");
-		check(t[8].text == "}" && t[8].line == 4 && t[8].type == T_CLOSE_BRACE, "} l4");
+		checkBasicTokens(t);
 	}
 	catch (const std::exception& e)
 	{
 		check(false, std::string("pas d'exception attendue : ") + e.what());
 	}
+}
 
-	// 2. Mot collé à un commentaire + '#' et ';' dans quotes.
+static void testCommentsAndQuotes()
+{
+	// Mot collé à un commentaire + '#' et ';' dans quotes.
 	writeFile("/tmp/tok2.conf", "root x#fin\nlisten 'a;b#c';\n");
 	try
 	{
@@ -95,8 +114,10 @@ int main()
 	{
 		check(false, std::string("pas d'exception attendue : ") + e.what());
 	}
+}
 
-	// 3. Fichier inexistant -> runtime_error explicite.
+static void testMissingFile()
+{
 	try
 	{
 		ConfigFileTokenizer tz("/tmp/nonexistent_xyz.conf");
@@ -108,8 +129,10 @@ int main()
 			"message 'cannot open'");
 		std::cout << "  msg: " << e.what() << std::endl;
 	}
+}
 
-	// 4. Fichier vide -> zéro token, pas d'erreur.
+static void testEmptyFile()
+{
 	writeFile("/tmp/tok_empty.conf", "");
 	try
 	{
@@ -120,8 +143,10 @@ int main()
 	{
 		check(false, std::string("vide ne doit pas jeter : ") + e.what());
 	}
+}
 
-	// 5. Quote non fermée -> runtime_error avec ligne.
+static void testUnterminatedQuote()
+{
 	writeFile("/tmp/tok_bad.conf", "server {\n root \"/tmp/x;\n}\n");
 	try
 	{
@@ -130,13 +155,16 @@ int main()
 	}
 	catch (const std::runtime_error& e)
 	{
-		check(std::string(e.what()).find("unterminated quote") != std::string::npos
-			&& std::string(e.what()).find("line 2") != std::string::npos,
+		std::string msg = e.what();
+		check(msg.find("unterminated quote") != std::string::npos
+			&& msg.find("line 2") != std::string::npos,
 			"message 'unterminated quote (line 2)'");
-		std::cout << "  msg: " << e.what() << std::endl;
+		std::cout << "  msg: " << msg << std::endl;
 	}
+}
 
-	// 6. Répertoire -> runtime_error (pas de crash).
+static void testDirectory()
+{
 	try
 	{
 		ConfigFileTokenizer tz("/tmp");
@@ -147,9 +175,13 @@ int main()
 		check(true, "répertoire rejeté");
 		std::cout << "  msg: " << e.what() << std::endl;
 	}
+}
 
-	// 7. Pas de token vide malgré espaces/tabulations/CRLF en trop.
-	writeFile("/tmp/tok_ws.conf", "  server\t {\r\n\n  listen   8080  ;  \r\n}\r\n");
+static void testWhitespace()
+{
+	// Pas de token vide malgré espaces/tabulations/CRLF en trop.
+	writeFile("/tmp/tok_ws.conf",
+		"  server\t {\r\n\n  listen   8080  ;  \r\n}\r\n");
 	try
 	{
 		ConfigFileTokenizer tz("/tmp/tok_ws.conf");
@@ -159,8 +191,11 @@ int main()
 	{
 		check(false, std::string("pas d'exception attendue : ") + e.what());
 	}
+}
 
-	// 8. Quotes vides -> T_VALUE vide explicite (pas de token avalé).
+static void testEmptyQuotedValue()
+{
+	// Quotes vides -> T_VALUE vide explicite (pas de token avalé).
 	writeFile("/tmp/tok_empty_q.conf", "root \"\";\n");
 	try
 	{
@@ -173,13 +208,29 @@ int main()
 	{
 		check(false, std::string("pas d'exception attendue : ") + e.what());
 	}
+}
 
+static void cleanupFiles()
+{
 	std::remove("/tmp/tok1.conf");
 	std::remove("/tmp/tok2.conf");
 	std::remove("/tmp/tok_empty.conf");
 	std::remove("/tmp/tok_bad.conf");
 	std::remove("/tmp/tok_ws.conf");
 	std::remove("/tmp/tok_empty_q.conf");
+}
+
+int main()
+{
+	testBasicTokenization();
+	testCommentsAndQuotes();
+	testMissingFile();
+	testEmptyFile();
+	testUnterminatedQuote();
+	testDirectory();
+	testWhitespace();
+	testEmptyQuotedValue();
+	cleanupFiles();
 
 	std::cout << "PASS=" << g_pass << " FAIL=" << g_fail << std::endl;
 	return (g_fail == 0 ? 0 : 1);

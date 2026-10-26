@@ -18,6 +18,39 @@ static std::string join(const std::vector<std::string>& v)
 	return (out);
 }
 
+static void printLocation(std::size_t serverIndex, std::size_t locIndex,
+	const LocationConfig& l)
+{
+	std::cout << "LOC[" << serverIndex << "." << locIndex << "]"
+		<< " path=" << l.getPath()
+		<< " root=" << l.getRoot()
+		<< " index=" << join(l.getIndexes())
+		<< " maxbody=" << l.getClientMaxBodySize()
+		<< " methods=" << join(l.getMethods())
+		<< std::endl;
+}
+
+static void printServer(std::size_t index, const ServerConfig& s)
+{
+	std::cout << "SERVER[" << index << "]"
+		<< " default=" << (s.isDefault() ? "Y" : "N")
+		<< " root=" << s.getRoot()
+		<< " index=" << join(s.getIndexes())
+		<< " maxbody=" << s.getClientMaxBodySize()
+		<< " names=" << join(s.getServerNames())
+		<< std::endl;
+	const std::vector<LocationConfig>& locs = s.getLocations();
+	for (std::size_t j = 0; j < locs.size(); ++j)
+		printLocation(index, j, locs[j]);
+}
+
+static void printConfig(const Config& cfg)
+{
+	const std::vector<ServerConfig>& servers = cfg.getServers();
+	for (std::size_t i = 0; i < servers.size(); ++i)
+		printServer(i, servers[i]);
+}
+
 int main(int argc, char* argv[])
 {
 	if (argc != 2)
@@ -28,30 +61,7 @@ int main(int argc, char* argv[])
 	try
 	{
 		Config cfg(argv[1]);
-		const std::vector<ServerConfig>& servers = cfg.getServers();
-		for (std::size_t i = 0; i < servers.size(); ++i)
-		{
-			const ServerConfig& s = servers[i];
-			std::cout << "SERVER[" << i << "]"
-				<< " default=" << (s.isDefault() ? "Y" : "N")
-				<< " root=" << s.getRoot()
-				<< " index=" << join(s.getIndexes())
-				<< " maxbody=" << s.getClientMaxBodySize()
-				<< " names=" << join(s.getServerNames())
-				<< std::endl;
-			const std::vector<LocationConfig>& locs = s.getLocations();
-			for (std::size_t j = 0; j < locs.size(); ++j)
-			{
-				const LocationConfig& l = locs[j];
-				std::cout << "LOC[" << i << "." << j << "]"
-					<< " path=" << l.getPath()
-					<< " root=" << l.getRoot()
-					<< " index=" << join(l.getIndexes())
-					<< " maxbody=" << l.getClientMaxBodySize()
-					<< " methods=" << join(l.getMethods())
-					<< std::endl;
-			}
-		}
+		printConfig(cfg);
 	}
 	catch (const std::exception& e)
 	{

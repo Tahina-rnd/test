@@ -9,37 +9,41 @@ static void printUsage(const char* prog)
 	std::cerr << "Usage: " << prog << " [config_file]" << std::endl;
 }
 
-int main(int argc, char* argv[])
+static std::string configPathFromArgs(int argc, char* argv[])
 {
-	signal(SIGPIPE, SIG_IGN);
-
-	if (argc > 2)
-	{
-		printUsage(argv[0]);
-		return (1);
-	}
-
-	std::string configPath = "configs/default.conf";
 	if (argc == 2)
-		configPath = argv[1];
+		return (argv[1]);
+	return ("configs/default.conf");
+}
 
+static void printServerSummary(const Config& config, const std::string& path)
+{
+	std::cout << "Loaded " << config.getServers().size()
+		<< " server(s) from " << path << std::endl;
+	for (std::size_t i = 0; i < config.getServers().size(); ++i)
+	{
+		const std::vector<ServerConfig::Listen>& ls =
+			config.getServers()[i].getListens();
+		for (std::size_t j = 0; j < ls.size(); ++j)
+			std::cout << "  server[" << i << "] listen "
+				<< ls[j].host << ":" << ls[j].port
+				<< (ls[j].is_default ? " (default)" : "") << std::endl;
+	}
+}
+
+static void runServer(const Config& config)
+{
+	Server server(config.getServers());
+	server.run();
+}
+
+static int runWithConfig(const std::string& configPath)
+{
 	try
 	{
 		Config config(configPath);
-		std::cout << "Loaded " << config.getServers().size()
-			<< " server(s) from " << configPath << std::endl;
-		for (std::size_t i = 0; i < config.getServers().size(); ++i)
-		{
-			const std::vector<ServerConfig::Listen>& ls =
-				config.getServers()[i].getListens();
-			for (std::size_t j = 0; j < ls.size(); ++j)
-				std::cout << "  server[" << i << "] listen "
-					<< ls[j].host << ":" << ls[j].port
-					<< (ls[j].is_default ? " (default)" : "") << std::endl;
-		}
-
-		Server server(config.getServers());
-		server.run();
+		printServerSummary(config, configPath);
+		runServer(config);
 	}
 	catch (const ConfigError& e)
 	{
@@ -51,6 +55,17 @@ int main(int argc, char* argv[])
 		std::cerr << "Fatal error: " << e.what() << std::endl;
 		return (1);
 	}
-
 	return (0);
+}
+
+int main(int argc, char* argv[])
+{
+	signal(SIGPIPE, SIG_IGN);
+
+	if (argc > 2)
+	{
+		printUsage(argv[0]);
+		return (1);
+	}
+	return (runWithConfig(configPathFromArgs(argc, argv)));
 }

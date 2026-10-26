@@ -7,6 +7,124 @@
 #include <stdexcept>
 #include <sys/stat.h>
 
+namespace
+{
+
+struct TokenizerState
+{
+	std::string cur;
+	int curLine;
+	int line;
+	bool atStatementStart;
+	bool inQuote;
+	char quoteChar;
+	bool tokenStarted;
+
+	TokenizerState()
+		: cur(), curLine(1), line(1), atStatementStart(true),
+		  inQuote(false), quoteChar('\0'), tokenStarted(false)
+	{
+	}
+};
+
+void pushToken(std::vector<Token>& tokens, TokenizerState& s)
+{
+	if (!s.tokenStarted)
+		return;
+	tokens.push_back(Token(s.cur, s.curLine,
+		s.atStatementStart ? T_KEYWORD : T_VALUE));
+	s.cur.clear();
+	s.tokenStarted = false;
+	s.atStatementStart = false;
+}
+
+void startToken(TokenizerState& s)
+{
+	s.tokenStarted = true;
+	s.curLine = s.line;
+}
+
+void appendQuoted(char c, TokenizerState& s)
+{
+	if (c == s.quoteChar)
+	{
+		s.inQuote = false;
+		return;
+	}
+	if (c == '\n')
+		++s.line;
+	s.cur += c;
+}
+
+void startQuote(char c, TokenizerState& s)
+{
+	if (!s.tokenStarted)
+		startToken(s);
+	s.inQuote = true;
+	s.quoteChar = c;
+}
+
+bool skipComment(const std::string& content, std::size_t& i,
+	std::vector<Token>& tokens, TokenizerState& s)
+{
+	pushToken(tokens, s);
+	while (i < content.size() && content[i] != '\n')
+		++i;
+	if (i >= content.size())
+		return false;
+	--i; // Laisse la boucle traiter '\n' (comptage de ligne + flush).
+	return true;
+}
+
+void handleWhitespace(char c, std::vector<Token>& tokens, TokenizerState& s)
+{
+	pushToken(tokens, s);
+	if (c == '\n')
+		++s.line;
+}
+
+void handlePunctuation(char c, std::vector<Token>& tokens, TokenizerState& s)
+{
+	pushToken(tokens, s);
+	TokenType ty = T_SEMICOLON;
+	if (c == '{')
+		ty = T_OPEN_BRACE;
+	else if (c == '}')
+		ty = T_CLOSE_BRACE;
+	tokens.push_back(Token(std::string(1, c), s.line, ty));
+	s.atStatementStart = true;
+}
+
+void handleNormalChar(char c, TokenizerState& s)
+{
+	if (!s.tokenStarted)
+		startToken(s);
+	s.cur += c;
+}
+
+void finishTokenization(std::vector<Token>& tokens, TokenizerState& s)
+{
+	if (s.inQuote)
+	{
+		std::ostringstream oss;
+		oss << "config: unterminated quote (line " << s.curLine << ")";
+		throw std::runtime_error(oss.str());
+	}
+	pushToken(tokens, s);
+}
+
+void stripBom(std::string& out)
+{
+	// BOM UTF-8 (fichiers édités sous Windows) : ignoré comme nginx.
+	if (out.size() >= 3
+		&& static_cast<unsigned char>(out[0]) == 0xEF
+		&& static_cast<unsigned char>(out[1]) == 0xBB
+		&& static_cast<unsigned char>(out[2]) == 0xBF)
+		out.erase(0, 3);
+}
+
+} // namespace
+
 Token::Token(): text(), line(1), type(T_VALUE)
 {
 }
@@ -57,114 +175,31 @@ void ConfigFileTokenizer::readFile(const std::string& path, std::string& out)
 	if (in.bad() || (in.fail() && !in.eof()))
 		throw std::runtime_error("config: cannot read '" + path + "'");
 	out = oss.str();
-	// BOM UTF-8 (fichiers édités sous Windows) : ignoré comme nginx.
-	if (out.size() >= 3
-		&& static_cast<unsigned char>(out[0]) == 0xEF
-		&& static_cast<unsigned char>(out[1]) == 0xBB
-		&& static_cast<unsigned char>(out[2]) == 0xBF)
-		out.erase(0, 3);
+	stripBom(out);
 }
 
 void ConfigFileTokenizer::tokenize(const std::string& content)
 {
-	std::string cur;
-	int curLine = 1;   // ligne où le token courant a commencé
-	int line = 1;      // ligne courante
-	bool atStatementStart = true;
-	bool inQuote = false;
-	char quoteChar = '\0';
-	// Token démarré même si encore vide : `""` émet un T_VALUE vide
-	// (rejet explicite côté sémantique, pas d'erreur trompeuse aval).
-	bool tokenStarted = false;
+	TokenizerState s;
 
 	for (std::size_t i = 0; i < content.size(); ++i)
 	{
 		char c = content[i];
-		if (inQuote)
-		{
-			if (c == quoteChar)
-				inQuote = false;
-			else
-			{
-				if (c == '\n')
-					++line;
-				cur += c;
-			}
-		}
+		if (s.inQuote)
+			appendQuoted(c, s);
 		else if (c == '"' || c == '\'')
-		{
-			if (!tokenStarted)
-			{
-				tokenStarted = true;
-				curLine = line;
-			}
-			inQuote = true;
-			quoteChar = c;
-		}
+			startQuote(c, s);
 		else if (c == '#')
 		{
-			if (tokenStarted)
-			{
-				_tokens.push_back(Token(cur, curLine,
-					atStatementStart ? T_KEYWORD : T_VALUE));
-				cur.clear();
-				tokenStarted = false;
-				atStatementStart = false;
-			}
-			while (i < content.size() && content[i] != '\n')
-				++i;
-			if (i >= content.size())
+			if (!skipComment(content, i, _tokens, s))
 				break;
-			// Laisse la boucle traiter '\n' (comptage de ligne + flush).
-			--i;
 		}
 		else if (c == ' ' || c == '\t' || c == '\r' || c == '\n')
-		{
-			if (tokenStarted)
-			{
-				_tokens.push_back(Token(cur, curLine,
-					atStatementStart ? T_KEYWORD : T_VALUE));
-				cur.clear();
-				tokenStarted = false;
-				atStatementStart = false;
-			}
-			if (c == '\n')
-				++line;
-		}
+			handleWhitespace(c, _tokens, s);
 		else if (c == '{' || c == '}' || c == ';')
-		{
-			if (tokenStarted)
-			{
-				_tokens.push_back(Token(cur, curLine,
-					atStatementStart ? T_KEYWORD : T_VALUE));
-				cur.clear();
-				tokenStarted = false;
-			}
-			TokenType ty = T_SEMICOLON;
-			if (c == '{')
-				ty = T_OPEN_BRACE;
-			else if (c == '}')
-				ty = T_CLOSE_BRACE;
-			_tokens.push_back(Token(std::string(1, c), line, ty));
-			atStatementStart = true;
-		}
+			handlePunctuation(c, _tokens, s);
 		else
-		{
-			if (!tokenStarted)
-			{
-				tokenStarted = true;
-				curLine = line;
-			}
-			cur += c;
-		}
+			handleNormalChar(c, s);
 	}
-	if (inQuote)
-	{
-		std::ostringstream oss;
-		oss << "config: unterminated quote (line " << curLine << ")";
-		throw std::runtime_error(oss.str());
-	}
-	if (tokenStarted)
-		_tokens.push_back(Token(cur, curLine,
-			atStatementStart ? T_KEYWORD : T_VALUE));
+	finishTokenization(_tokens, s);
 }

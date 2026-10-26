@@ -5,13 +5,63 @@
 #include <stdexcept>
 #include <cstring>
 #include <sstream>
-#include <fcntl.h>
 #include <cerrno>
 #include <netdb.h>
 #include <sys/socket.h>
 #include <sys/types.h>
 
 static const int LISTEN_BACKLOG = 128;
+
+namespace
+{
+
+void initHints(struct addrinfo& hints, bool passive)
+{
+    // Init champ par champ : pas de memset (hors liste du sujet).
+    hints.ai_flags = passive ? AI_PASSIVE : 0;
+    hints.ai_family = AF_INET;
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_protocol = 0;
+    hints.ai_addrlen = 0;
+    hints.ai_addr = NULL;
+    hints.ai_canonname = NULL;
+    hints.ai_next = NULL;
+}
+
+std::string portToString(int port)
+{
+    std::ostringstream oss;
+    oss << port;
+    return oss.str();
+}
+
+struct addrinfo* resolveAddresses(const std::string& host,
+    const std::string& portStr)
+{
+    struct addrinfo hints;
+    initHints(hints, true);
+    struct addrinfo* res = NULL;
+    const char* node = NULL;
+    if (!host.empty() && host != "0.0.0.0" && host != "*")
+        node = host.c_str();
+    int rc = getaddrinfo(node, portStr.c_str(), &hints, &res);
+    if (rc != 0)
+        throw std::runtime_error("getaddrinfo() failed: " + std::string(gai_strerror(rc)));
+    return res;
+}
+
+bool bindAddresses(int fd, struct addrinfo* res, std::string& lastErr)
+{
+    for (struct addrinfo* p = res; p != NULL; p = p->ai_next)
+    {
+        if (bind(fd, p->ai_addr, p->ai_addrlen) == 0)
+            return true;
+        lastErr = strerror(errno);
+    }
+    return false;
+}
+
+} // namespace
 
 Socket::Socket(const ServerConfig& config, const std::string& host, int port)
 	: _fd(-1), _config(config)
@@ -79,42 +129,15 @@ void Socket::setSocketOptions()
 
 void Socket::bindSocket(const std::string& host, int port)
 {
-    // Init champ par champ : pas de memset (hors liste du sujet).
-    struct addrinfo hints;
-    hints.ai_flags = 0;
-    hints.ai_family = AF_INET;
-    hints.ai_socktype = SOCK_STREAM;
-    hints.ai_protocol = 0;
-    hints.ai_addrlen = 0;
-    hints.ai_addr = NULL;
-    hints.ai_canonname = NULL;
-    hints.ai_next = NULL;
+    // AI_PASSIVE : avec node == NULL, getaddrinfo renvoie l'adresse
+    // joker (0.0.0.0), comme nginx pour `listen 8080;`. Sans ce flag,
+    // node == NULL donne la loopback (127.0.0.1), ce qui casse le
+    // multi-interface.
+    std::string portStr = portToString(port);
+    struct addrinfo* res = resolveAddresses(host, portStr);
 
-    // Conversion C++ (pas de snprintf, hors liste du sujet).
-    std::ostringstream oss;
-    oss << port;
-    std::string portStr = oss.str();
-
-    struct addrinfo* res = NULL;
-    const char* node = NULL;
-    if (!host.empty() && host != "0.0.0.0" && host != "*")
-        node = host.c_str();
-
-    int rc = getaddrinfo(node, portStr.c_str(), &hints, &res);
-    if (rc != 0)
-        throw std::runtime_error("getaddrinfo() failed: " + std::string(gai_strerror(rc)));
-
-    bool bound = false;
     std::string lastErr;
-    for (struct addrinfo* p = res; p != NULL; p = p->ai_next)
-    {
-        if (bind(_fd, p->ai_addr, p->ai_addrlen) == 0)
-        {
-            bound = true;
-            break;
-        }
-        lastErr = strerror(errno);
-    }
+    bool bound = bindAddresses(_fd, res, lastErr);
     freeaddrinfo(res);
     if (!bound)
         throw std::runtime_error("bind() failed [" + host + "]:" + portStr + ": " + lastErr);

@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8">
+    <title>Démo Webserv — Sprints 1 à 4</title>
+    <style>
+        body { font-family: system-ui, sans-serif; max-width: 920px; margin: 2rem auto; padding: 0 1rem; line-height: 1.5; color: #1b1b1b; }
+        h1 { margin-bottom: .2rem; }
+        .sub { color: #666; margin-top: 0; }
+        section { border: 1px solid #d5d5d5; border-radius: 10px; padding: 1rem 1.2rem; margin: 1.2rem 0; }
+        section h2 { margin-top: 0; font-size: 1.15rem; }
+        section h2 span { font-size: .8rem; color: #777; font-weight: normal; }
+        input, textarea, button { font: inherit; margin: .25rem 0; }
+        input[type="text"], textarea { width: 100%; box-sizing: border-box; padding: .35rem; }
+        button { cursor: pointer; padding: .4rem .8rem; border: 1px solid #888; border-radius: 6px; background: #f6f6f6; }
+        button:hover { background: #e9e9e9; }
+        button.primary { background: #1f6feb; border-color: #1f6feb; color: #fff; }
+        button.primary:hover { background: #1a5fd0; }
+        pre { background: #111; color: #ddd; padding: 1rem; border-radius: 8px; overflow: auto; min-height: 10rem; max-height: 28rem; font-size: .85rem; }
+        code { background: #eee; padding: .1rem .3rem; border-radius: 4px; }
+        details { margin: .6rem 0; }
+        summary { cursor: pointer; color: #1f6feb; }
+        .row { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; }
+        .field { margin: .8rem 0 .3rem; }
+        .field label { display: block; font-weight: 600; }
+        .note { background: #fff8e1; border-left: 4px solid #f0b429; padding: .5rem .8rem; font-size: .9rem; }
+    </style>
+</head>
+<body>
+    <h1>Démo Webserv — Sprints 1 à 4</h1>
+    <p class="sub">
+        Serveur : <code>./webserv configs/default.conf</code> — page : <code>http://localhost:8080/upload_demo.html</code>
+    </p>
+    <p class="note">
+        La barre d'adresse ne fait que des <code>GET</code>. Cette page utilise <code>fetch</code> pour envoyer
+        <code>POST</code>, <code>DELETE</code>, <code>PUT</code> et les cas d'erreur.
+    </p>
+
+    <section>
+        <h2>Sprint 1 — Socle réseau <span>non bloquant, un seul poll()</span></h2>
+        <div class="row">
+            <button id="s1get">GET statique</button>
+            <button id="s1parallel">12 requêtes simultanées</button>
+            <button id="s1keepalive">2 requêtes keep-alive</button>
+        </div>
+        <details>
+            <summary>Tests impossibles depuis le navigateur (requête fragmentée, charge)</summary>
+            <pre># requête volontairement fragmentée, envoyée octet par octet
+python3 test/fragment_test.py
+
+# charge : 100 requêtes, vérifier que le serveur reste vivant
+for i in $(seq 1 100); do curl -s -o /dev/null http://localhost:8080/; done
+ss -ltnp | grep 8080</pre>
+        </details>
+    </section>
+
+    <section>
+        <h2>Sprint 2 — Configuration nginx <span>routage, redirection, multi-ports, vhosts</span></h2>
+        <div class="row">
+            <button id="s2redirect">Redirection 301 (/redirect)</button>
+            <a href="http://localhost:8081/" target="_blank">Ouvrir le port 8081</a>
+            <a href="http://localhost:8082/" target="_blank">Ouvrir le port 8082 (autoindex)</a>
+        </div>
+        <p><small>
+            Les ports 8081/8082 nécessitent <code>./webserv configs/demo_multi.conf</code>
+            (arrêter d'abord la configuration par défaut, qui occupe déjà 8080).
+        </small></p>
+        <details>
+            <summary>Hôtes virtuels : commande curl (le navigateur ne peut pas forcer l'en-tête Host)</summary>
+            <pre># avec ./webserv configs/demo_vhosts.conf
+curl -s -H "Host: alpha.local" http://localhost:8080/ | head
+curl -s -H "Host: beta.local"  http://localhost:8080/ | head
+
+# validation de la configuration
+./test/config_tests.sh
+./test/test_tokenizer</pre>
+        </details>
+    </section>
+
+    <section>
+        <h2>Sprint 3 — HTTP, routage et statique <span>erreurs, limites, MIME, traversal</span></h2>
+        <div class="row">
+            <button id="s3notfound">404 page custom</button>
+            <button id="s3forbidden">403 répertoire</button>
+            <button id="s3traversal">403 traversal</button>
+            <button id="s3body">413 corps &gt; 1 Mo</button>
+            <button id="s3uri">414 URI &gt; 8 Ko</button>
+            <button id="s3headers">431 en-têtes &gt; 8 Ko</button>
+            <button id="s3mime">Types MIME</button>
+        </div>
+        <details>
+            <summary>Tests chunked et requêtes brutes</summary>
+            <pre># corps chunked
+curl -s -i -X POST -H "Transfer-Encoding: chunked" \
+     --data-binary "hello" http://localhost:8080/upload/chunked.txt
+
+# version HTTP refusée, méthode inconnue
+printf 'GET / HTTP/2.0\r\nHost: localhost\r\n\r\n' | nc localhost 8080</pre>
+        </details>
+    </section>
+
+    <section>
+        <h2>Sprint 4 — POST / GET / DELETE <span>upload, suppression, 405</span></h2>
+        <div class="field">
+            <label for="file">Fichier :</label>
+            <input id="file" type="file">
+        </div>
+        <div class="field">
+            <label for="fileName">Nom explicite (optionnel) :</label>
+            <input id="fileName" type="text" placeholder="mon-fichier.bin">
+        </div>
+        <button id="uploadFile">Envoyer le fichier</button>
+        <p><small>Le corps brut est écrit dans <code>www/site1/upload/</code>.</small></p>
+
+        <div class="field">
+            <label for="textBody">Texte :</label>
+            <textarea id="textBody" rows="3">Bonjour depuis le navigateur</textarea>
+        </div>
+        <div class="field">
+            <label for="textName">Nom :</label>
+            <input id="textName" type="text" value="demo.txt">
+        </div>
+        <button id="uploadText">Envoyer le texte</button>
+
+        <div class="field">
+            <label for="target">Cible :</label>
+            <input id="target" type="text" value="/upload/demo.txt">
+        </div>
+        <div class="row">
+            <button id="getButton">GET</button>
+            <button id="deleteButton">DELETE</button>
+            <button id="putButton">PUT (405 attendu)</button>
+            <button id="missingButton">GET absent (404 attendu)</button>
+        </div>
+    </section>
+
+    <section>
+        <h2>Suite complète <span>exécute toutes les vérifications navigateur</span></h2>
+        <div class="row">
+            <button id="runAll" class="primary">Lancer toute la suite</button>
+            <button id="clearLog">Effacer le journal</button>
+        </div>
+        <p id="summary"><small>Aucune suite lancée.</small></p>
+    </section>
+
+    <h2>Journal des réponses</h2>
+    <pre id="log">Prêt.</pre>
+
+    <script>
+        const logElement = document.getElementById("log");
+        const summaryElement = document.getElementById("summary");
+        const targetInput = document.getElementById("target");
+        const fileInput = document.getElementById("file");
+        const fileNameInput = document.getElementById("fileName");
+        const textNameInput = document.getElementById("textName");
+        const textBody = document.getElementById("textBody");
+        const results = [];
+
+        function log(message) {
+            logElement.textContent = message + "\n\n" + logElement.textContent;
+        }
+
+        function record(name, ok, detail) {
+            results.push({ name: name, ok: ok, detail: detail || "" });
+            log((ok ? "[OK]   " : "[FAIL] ") + name + (detail ? " — " + detail : ""));
+        }
+
+        function refreshSummary() {
+            const passed = results.filter(function (r) { return r.ok; }).length;
+            summaryElement.innerHTML = "<small>" + passed + " / " + results.length +
+                " vérifications OK</small>";
+        }
+
+        function withCacheBuster(url) {
+            const separator = url.indexOf("?") === -1 ? "?" : "&";
+            return url + separator + "t=" + Date.now() + "-" + Math.random().toString(36).slice(2);
+        }
+
+        async function request(label, method, url, options) {
+            const settings = Object.assign({ method: method, cache: "no-store" }, options || {});
+            try {
+                const response = await fetch(withCacheBuster(url), settings);
+                const text = await response.text();
+                log(
+                    label + "\n" +
+                    method + " " + url + "\n" +
+                    "→ " + response.status + " " + response.statusText + "\n" +
+                    "Content-Type: " + (response.headers.get("Content-Type") || "—") + "\n" +
+                    "Connection: " + (response.headers.get("Connection") || "—") + "\n" +
+                    "Allow: " + (response.headers.get("Allow") || "—") + "\n" +
+                    "Location: " + (response.headers.get("Location") || "—") + "\n" +
+                    "Corps: " + (text ? text.slice(0, 200) : "(vide)")
+                );
+                const location = response.headers.get("Location");
+                if (location) {
+                    targetInput.value = location;
+                }
+                return { response: response, text: text, error: null };
+            } catch (error) {
+                log(label + "\nErreur réseau : " + error);
+                return { response: null, text: "", error: error };
+            }
+        }
+
+        function uploadUrl(name) {
+            return "/upload/" + encodeURIComponent(name);
+        }
+
+        document.getElementById("s1get").addEventListener("click", async function () {
+            const r = await request("Sprint 1 — GET statique", "GET", "/");
+            record("Sprint 1 : GET / répond 200", r.response && r.response.status === 200);
+        });
+
+        document.getElementById("s1parallel").addEventListener("click", async function () {
+            const started = performance.now();
+            const jobs = [];
+            for (let i = 0; i < 12; i++) {
+                jobs.push(fetch(withCacheBuster("/"), { cache: "no-store" }));
+            }
+            const responses = await Promise.all(jobs);
+            const statuses = responses.map(function (r) { return r.status; });
+            const allOk = statuses.every(function (s) { return s === 200; });
+            log("Sprint 1 — 12 requêtes simultanées\nStatuts : " + statuses.join(", ") +
+                "\nDurée : " + Math.round(performance.now() - started) + " ms");
+            record("Sprint 1 : 12 requêtes parallèles en 200", allOk);
+        });
+
+        document.getElementById("s1keepalive").addEventListener("click", async function () {
+            const first = await request("Sprint 1 — keep-alive (1/2)", "GET", "/");
+            const second = await request("Sprint 1 — keep-alive (2/2)", "GET", "/upload_demo.html");
+            const connection = first.response ? first.response.headers.get("Connection") : null;
+            const ok = first.response && second.response &&
+                first.response.status === 200 && second.response.status === 200 &&
+                connection === "keep-alive";
+            record("Sprint 1 : deux GET successifs en keep-alive", ok, "Connection: " + connection);
+        });
+
+        document.getElementById("s2redirect").addEventListener("click", async function () {
+            const r = await request("Sprint 2 — redirection", "GET", "/redirect", { redirect: "follow" });
+            const ok = r.response && r.response.status === 200 && r.response.redirected === true;
+            record("Sprint 2 : /redirect redirige vers /", ok,
+                r.response ? "URL finale : " + r.response.url : "erreur réseau");
+        });
+
+        document.getElementById("s3notfound").addEventListener("click", async function () {
+            const r = await request("Sprint 3 — 404 custom", "GET", "/page-absente-" + Date.now() + ".html");
+            const ok = r.response && r.response.status === 404 && r.text.indexOf("introuvable") !== -1;
+            record("Sprint 3 : 404 avec page custom", ok);
+        });
+
+        document.getElementById("s3forbidden").addEventListener("click", async function () {
+            const r = await request("Sprint 3 — 403 répertoire", "GET", "/errors/");
+            record("Sprint 3 : répertoire sans index → 403", r.response && r.response.status === 403);
+        });
+
+        document.getElementById("s3traversal").addEventListener("click", async function () {
+            const r = await request("Sprint 3 — traversal", "GET", "/..%2f..%2fetc%2fpasswd");
+            record("Sprint 3 : traversée de répertoire → 403", r.response && r.response.status === 403);
+        });
+
+        document.getElementById("s3body").addEventListener("click", async function () {
+            const big = new Uint8Array(2 * 1024 * 1024);
+            const r = await request("Sprint 3 — corps trop gros", "POST", "/upload/trop-gros.bin", { body: big });
+            record("Sprint 3 : corps > 1 Mo → 413", r.response && r.response.status === 413);
+        });
+
+        document.getElementById("s3uri").addEventListener("click", async function () {
+            const longUrl = "/" + "a".repeat(9000);
+            const r = await request("Sprint 3 — URI trop longue", "GET", longUrl);
+            record("Sprint 3 : URI > 8 Ko → 414", r.response && r.response.status === 414);
+        });
+
+        document.getElementById("s3headers").addEventListener("click", async function () {
+            const r = await request("Sprint 3 — en-têtes trop gros", "GET", "/", {
+                headers: { "X-Tres-Long": "a".repeat(9000) }
+            });
+            if (r.error) {
+                record("Sprint 3 : en-têtes > 8 Ko → 431", false,
+                    "le navigateur a bloqué la requête, tester avec curl");
+            } else {
+                record("Sprint 3 : en-têtes > 8 Ko → 431", r.response.status === 431);
+            }
+        });
+
+        document.getElementById("s3mime").addEventListener("click", async function () {
+            const html = await request("Sprint 3 — MIME HTML", "GET", "/upload_demo.html");
+            const txt = await request("Sprint 3 — MIME texte", "GET", "/errors/404.html");
+            const htmlType = html.response ? html.response.headers.get("Content-Type") : "";
+            const txtType = txt.response ? txt.response.headers.get("Content-Type") : "";
+            record("Sprint 3 : types MIME servis", htmlType.indexOf("text/html") !== -1,
+                "HTML=" + htmlType + ", autre=" + txtType);
+        });
+
+        document.getElementById("uploadFile").addEventListener("click", async function () {
+            const file = fileInput.files[0];
+            if (!file) {
+                log("Choisir un fichier avant d'envoyer.");
+                return;
+            }
+            if (file.size > 1048576) {
+                log("Fichier trop gros pour la configuration par défaut (1 Mo).");
+                return;
+            }
+            const name = fileNameInput.value.trim() || file.name;
+            const r = await request("Sprint 4 — upload fichier", "POST", uploadUrl(name), { body: file });
+            record("Sprint 4 : upload fichier → 201", r.response && r.response.status === 201);
+        });
+
+        document.getElementById("uploadText").addEventListener("click", async function () {
+            const name = textNameInput.value.trim() || "demo.txt";
+            const r = await request("Sprint 4 — upload texte", "POST", uploadUrl(name), { body: textBody.value });
+            record("Sprint 4 : upload texte → 201", r.response && r.response.status === 201);
+        });
+
+        document.getElementById("getButton").addEventListener("click", async function () {
+            const r = await request("Sprint 4 — GET", "GET", targetInput.value);
+            record("Sprint 4 : GET de la cible → 200", r.response && r.response.status === 200);
+        });
+
+        document.getElementById("deleteButton").addEventListener("click", async function () {
+            const r = await request("Sprint 4 — DELETE", "DELETE", targetInput.value);
+            record("Sprint 4 : DELETE → 204", r.response && r.response.status === 204);
+        });
+
+        document.getElementById("putButton").addEventListener("click", async function () {
+            const r = await request("Sprint 4 — PUT interdit", "PUT", targetInput.value, { body: "x" });
+            const allow = r.response ? (r.response.headers.get("Allow") || "") : "";
+            record("Sprint 4 : PUT → 405 + Allow", r.response && r.response.status === 405 &&
+                allow.indexOf("GET") !== -1, "Allow: " + allow);
+        });
+
+        document.getElementById("missingButton").addEventListener("click", async function () {
+            const r = await request("Sprint 4 — GET absent", "GET",
+                "/upload/absent-" + Date.now() + ".txt");
+            record("Sprint 4 : fichier absent → 404", r.response && r.response.status === 404);
+        });
+
+        async function runSuite() {
+            results.length = 0;
+            logElement.textContent = "Suite complète en cours…";
+            const name = "suite-" + Date.now() + ".txt";
+
+            const root = await request("Suite — GET /", "GET", "/");
+            record("GET / → 200", root.response && root.response.status === 200);
+
+            const missing = await request("Suite — 404", "GET", "/absent-" + Date.now() + ".html");
+            record("404 + page custom", missing.response && missing.response.status === 404 &&
+                missing.text.indexOf("introuvable") !== -1);
+
+            const forbidden = await request("Suite — 403", "GET", "/errors/");
+            record("Répertoire sans index → 403", forbidden.response && forbidden.response.status === 403);
+
+            const traversal = await request("Suite — traversal", "GET", "/..%2f..%2fetc%2fpasswd");
+            record("Traversal → 403", traversal.response && traversal.response.status === 403);
+
+            const tooBig = await request("Suite — 413", "POST", "/upload/trop-gros.bin",
+                { body: new Uint8Array(2 * 1024 * 1024) });
+            record("Corps > 1 Mo → 413", tooBig.response && tooBig.response.status === 413);
+
+            const longUri = await request("Suite — 414", "GET", "/" + "a".repeat(9000));
+            record("URI > 8 Ko → 414", longUri.response && longUri.response.status === 414);
+
+            const bigHeader = await request("Suite — 431", "GET", "/",
+                { headers: { "X-Tres-Long": "a".repeat(9000) } });
+            record("En-têtes > 8 Ko → 431", bigHeader.response && bigHeader.response.status === 431,
+                bigHeader.error ? "bloqué par le navigateur" : "");
+
+            const redirect = await request("Suite — 301", "GET", "/redirect", { redirect: "follow" });
+            record("/redirect → 301 puis 200", redirect.response && redirect.response.status === 200 &&
+                redirect.response.redirected === true);
+
+            const parallel = await Promise.all(Array.from({ length: 12 }, function () {
+                return fetch(withCacheBuster("/"), { cache: "no-store" });
+            }));
+            record("12 GET parallèles en 200",
+                parallel.every(function (r) { return r.status === 200; }));
+
+            const created = await request("Suite — POST", "POST", uploadUrl(name), { body: "test suite" });
+            record("POST → 201 + Location", created.response && created.response.status === 201 &&
+                !!created.response.headers.get("Location"));
+
+            const fetched = await request("Suite — GET upload", "GET", uploadUrl(name));
+            record("GET du fichier uploadé → 200", fetched.response && fetched.response.status === 200 &&
+                fetched.text === "test suite");
+
+            const put = await request("Suite — PUT", "PUT", uploadUrl(name), { body: "x" });
+            const allow = put.response ? (put.response.headers.get("Allow") || "") : "";
+            record("PUT → 405 + Allow", put.response && put.response.status === 405 &&
+                allow.indexOf("GET") !== -1);
+
+            const deleted = await request("Suite — DELETE", "DELETE", uploadUrl(name));
+            record("DELETE → 204", deleted.response && deleted.response.status === 204);
+
+            const afterDelete = await request("Suite — GET après DELETE", "GET", uploadUrl(name));
+            record("GET après DELETE → 404", afterDelete.response && afterDelete.response.status === 404);
+
+            refreshSummary();
+            log("Suite terminée.");
+        }
+
+        document.getElementById("runAll").addEventListener("click", runSuite);
+        document.getElementById("clearLog").addEventListener("click", function () {
+            logElement.textContent = "Journal effacé.";
+            results.length = 0;
+            summaryElement.innerHTML = "<small>Aucune suite lancée.</small>";
+        });
+
+        if (new URLSearchParams(window.location.search).has("auto")) {
+            runSuite();
+        }
+    </script>
+</body>
+</html>

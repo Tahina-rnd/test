@@ -3,6 +3,7 @@
 
 #include <list>
 #include <map>
+#include <string>
 #include <vector>
 #include <poll.h>
 
@@ -38,8 +39,19 @@ class Server
 		Server& operator=(const Server& other);
 
 		void setupListeners(const std::vector<ServerConfig>& configs);
+		void addListener(std::map<std::string, int>& byAddr,
+			const ServerConfig& config, const std::string& host,
+			int port, bool isDefault);
 
 		void buildPollFds(std::vector<pollfd>& fds) const;
+		void appendListenerPollFds(std::vector<pollfd>& fds) const;
+		void appendConnectionPollFds(std::vector<pollfd>& fds) const;
+		void processPollEvents(std::vector<pollfd>& fds);
+		bool pollOnce(std::vector<pollfd>& fds);
+		void handleListenerEvent(Listener& listener, short revents);
+		void handleConnectionEvent(int fd, short revents);
+		void sweepTimeouts();
+
 		void acceptNewConnection(Listener& listener);
 		void handleClientEvent(Connection& connection, short revents);
 
