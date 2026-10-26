@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
     <meta charset="utf-8">
-    <title>Démo Webserv — Sprints 1 à 4</title>
+    <title>Démo Webserv — Sprints 1 à 5</title>
     <style>
         body { font-family: system-ui, sans-serif; max-width: 920px; margin: 2rem auto; padding: 0 1rem; line-height: 1.5; color: #1b1b1b; }
         h1 { margin-bottom: .2rem; }
@@ -27,13 +27,13 @@
     </style>
 </head>
 <body>
-    <h1>Démo Webserv — Sprints 1 à 4</h1>
+    <h1>Démo Webserv — Sprints 1 à 5</h1>
     <p class="sub">
         Serveur : <code>./webserv configs/default.conf</code> — page : <code>http://localhost:8080/upload_demo.html</code>
     </p>
     <p class="note">
         La barre d'adresse ne fait que des <code>GET</code>. Cette page utilise <code>fetch</code> pour envoyer
-        <code>POST</code>, <code>DELETE</code>, <code>PUT</code> et les cas d'erreur.
+        <code>POST</code>, <code>DELETE</code>, <code>PUT</code>, les requêtes <code>CGI</code> et les cas d'erreur.
     </p>
 
     <section>
@@ -131,6 +131,17 @@ printf 'GET / HTTP/2.0\r\nHost: localhost\r\n\r\n' | nc localhost 8080</pre>
             <button id="deleteButton">DELETE</button>
             <button id="putButton">PUT (405 attendu)</button>
             <button id="missingButton">GET absent (404 attendu)</button>
+        </div>
+    </section>
+
+    <section>
+        <h2>Sprint 5 — CGI/1.1 Python <span>fork + execve, pipes non bloquants dans poll(), timeout 10s</span></h2>
+        <div class="row">
+            <button id="s5get">GET /cgi-bin/hello.py</button>
+            <button id="s5pathinfo">GET avec PATH_INFO</button>
+            <button id="s5post">POST /cgi-bin/echo.py</button>
+            <button id="s5bad">CGI malformé (502 attendu)</button>
+            <button id="s5slow">CGI lent &gt; 10s (504 attendu)</button>
         </div>
     </section>
 
@@ -335,6 +346,38 @@ printf 'GET / HTTP/2.0\r\nHost: localhost\r\n\r\n' | nc localhost 8080</pre>
             record("Sprint 4 : fichier absent → 404", r.response && r.response.status === 404);
         });
 
+        document.getElementById("s5get").addEventListener("click", async function () {
+            const r = await request("Sprint 5 — CGI GET", "GET", "/cgi-bin/hello.py?demo=browser");
+            const ok = r.response && r.response.status === 200 && r.text.indexOf("CGI_HELLO_OK") !== -1;
+            record("Sprint 5 : GET /cgi-bin/hello.py → 200", ok);
+        });
+
+        document.getElementById("s5pathinfo").addEventListener("click", async function () {
+            const r = await request("Sprint 5 — CGI PATH_INFO", "GET", "/cgi-bin/hello.py/extra/info?x=1");
+            const ok = r.response && r.response.status === 200 && r.text.indexOf("PATH_INFO=/extra/info") !== -1;
+            record("Sprint 5 : PATH_INFO transmis au CGI", ok);
+        });
+
+        document.getElementById("s5post").addEventListener("click", async function () {
+            const r = await request("Sprint 5 — CGI POST", "POST", "/cgi-bin/echo.py", {
+                headers: { "Content-Type": "text/plain" },
+                body: "Bonjour CGI depuis fetch"
+            });
+            const ok = r.response && r.response.status === 200 && r.text === "Bonjour CGI depuis fetch";
+            record("Sprint 5 : POST /cgi-bin/echo.py → 200 + écho exact", ok);
+        });
+
+        document.getElementById("s5bad").addEventListener("click", async function () {
+            const r = await request("Sprint 5 — CGI malformé", "GET", "/cgi-bin/hello.py?mode=badheader");
+            record("Sprint 5 : sortie CGI invalide → 502", r.response && r.response.status === 502);
+        });
+
+        document.getElementById("s5slow").addEventListener("click", async function () {
+            log("Sprint 5 — lancement de /cgi-bin/slow.py (attente du timeout serveur de 10 s)…");
+            const r = await request("Sprint 5 — CGI lent", "GET", "/cgi-bin/slow.py");
+            record("Sprint 5 : CGI > 10 s tué → 504", r.response && r.response.status === 504);
+        });
+
         async function runSuite() {
             results.length = 0;
             logElement.textContent = "Suite complète en cours…";
@@ -393,6 +436,18 @@ printf 'GET / HTTP/2.0\r\nHost: localhost\r\n\r\n' | nc localhost 8080</pre>
 
             const afterDelete = await request("Suite — GET après DELETE", "GET", uploadUrl(name));
             record("GET après DELETE → 404", afterDelete.response && afterDelete.response.status === 404);
+
+            const cgiGet = await request("Suite — CGI GET", "GET", "/cgi-bin/hello.py?suite=1");
+            record("CGI GET → 200 + variables CGI/1.1", cgiGet.response && cgiGet.response.status === 200 &&
+                cgiGet.text.indexOf("CGI_HELLO_OK") !== -1);
+
+            const cgiPost = await request("Suite — CGI POST", "POST", "/cgi-bin/echo.py",
+                { headers: { "Content-Type": "text/plain" }, body: "cgi post suite" });
+            record("CGI POST → 200 + écho exact", cgiPost.response && cgiPost.response.status === 200 &&
+                cgiPost.text === "cgi post suite");
+
+            const cgiBad = await request("Suite — CGI 502", "GET", "/cgi-bin/hello.py?mode=badheader");
+            record("CGI malformé → 502", cgiBad.response && cgiBad.response.status === 502);
 
             refreshSummary();
             log("Suite terminée.");

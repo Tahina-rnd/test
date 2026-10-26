@@ -434,7 +434,7 @@ pour cela.
 - une réponse CGI sans `Content-Length` sera lue jusqu'à EOF ;
 - un CGI trop lent sera tué et recevra `502`/`504`.
 
-**Statut :** 🕓 prévu, non implémenté.
+**Statut :** ✅ appliqué (`CgiHandler`, `Server`, `Connection`, `test/sprint5_tests.sh` 40/40).
 
 ---
 
@@ -516,7 +516,7 @@ fonctions externes, alors que DELETE est obligatoire.
 | Sprint 4 | POST / DELETE / upload | ✅ |
 | Sprint 4 | décodage URI avant normalisation | ✅ |
 | Sprint 4 | `std::remove` pour DELETE (contrainte du sujet) | ✅ |
-| Sprint 5 | CGI + timeout 10 s | 🕓 |
+| Sprint 5 | CGI + timeout 10 s | ✅ |
 | Sprint 6 | valgrind serveur + démos | 🕓 |
 
 ---

@@ -8,12 +8,15 @@
 #include "Request.hpp"
 #include "Response.hpp"
 
+class CgiHandler;
+
 class Connection
 {
 	public:
 		enum State
 		{
 			READING_REQUEST,
+			RUNNING_CGI,
 			SENDING_RESPONSE,
 			CLOSING
 		};
@@ -31,6 +34,12 @@ class Connection
 		void handleWritable();
 		void forceClose();
 
+		bool hasActiveCgi() const;
+		int getCgiInFd() const;
+		int getCgiOutFd() const;
+		void handleCgiEvent(int fd, short revents);
+		void checkCgiProgress(std::time_t now);
+
 	private:
 		Connection(const Connection& other);
 		Connection& operator=(const Connection& other);
@@ -38,6 +47,9 @@ class Connection
 		void processRequest();
 		void dispatchMethod(const std::string& normPath,
 			const LocationConfig* loc);
+		bool tryCgi(const std::string& normPath,
+			const LocationConfig* loc);
+		void clearCgi();
 		void handlePost(const std::string& normPath,
 			const LocationConfig* loc);
 		void handleDelete(const std::string& normPath,
@@ -84,6 +96,7 @@ class Connection
 		Request                     _request;
 		std::string                 _writeBuffer;
 		std::time_t                 _lastActivity;
+		CgiHandler*                 _cgi;
 };
 
 #endif

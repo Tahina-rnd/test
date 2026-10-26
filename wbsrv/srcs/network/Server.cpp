@@ -106,11 +106,41 @@ void Server::appendConnectionPollFds(std::vector<pollfd>& fds) const
     }
 }
 
+void Server::appendCgiPollFds(std::vector<pollfd>& fds) const
+{
+    for (std::map<int, Connection*>::const_iterator it = _connections.begin();
+         it != _connections.end(); ++it)
+    {
+        const Connection* conn = it->second;
+        if (!conn->hasActiveCgi())
+            continue;
+        int inFd = conn->getCgiInFd();
+        if (inFd != -1)
+        {
+            pollfd pfd;
+            pfd.fd = inFd;
+            pfd.events = POLLOUT;
+            pfd.revents = 0;
+            fds.push_back(pfd);
+        }
+        int outFd = conn->getCgiOutFd();
+        if (outFd != -1)
+        {
+            pollfd pfd;
+            pfd.fd = outFd;
+            pfd.events = POLLIN;
+            pfd.revents = 0;
+            fds.push_back(pfd);
+        }
+    }
+}
+
 void Server::buildPollFds(std::vector<pollfd>& fds) const
 {
     fds.clear();
     appendListenerPollFds(fds);
     appendConnectionPollFds(fds);
+    appendCgiPollFds(fds);
 }
 
 void Server::acceptNewConnection(Listener& listener)
@@ -181,6 +211,38 @@ void Server::handleConnectionEvent(int fd, short revents)
     }
 }
 
+Connection* Server::findConnectionByCgiFd(int fd)
+{
+    for (std::map<int, Connection*>::iterator it = _connections.begin();
+         it != _connections.end(); ++it)
+    {
+        Connection* conn = it->second;
+        if (!conn->hasActiveCgi())
+            continue;
+        if (conn->getCgiInFd() == fd || conn->getCgiOutFd() == fd)
+            return conn;
+    }
+    return NULL;
+}
+
+void Server::handleCgiPipeEvent(int fd, short revents)
+{
+    Connection* conn = findConnectionByCgiFd(fd);
+    if (!conn)
+        return;
+    try
+    {
+        conn->handleCgiEvent(fd, revents);
+        if (conn->getState() == Connection::CLOSING)
+            _toClose.push_back(conn->getFd());
+    }
+    catch (const std::exception&)
+    {
+        conn->forceClose();
+        _toClose.push_back(conn->getFd());
+    }
+}
+
 void Server::processPollEvents(std::vector<pollfd>& fds)
 {
     for (std::size_t i = 0; i < fds.size(); ++i)
@@ -195,7 +257,12 @@ void Server::processPollEvents(std::vector<pollfd>& fds)
             handleListenerEvent(itL->second, fds[i].revents);
             continue;
         }
-        handleConnectionEvent(fd, fds[i].revents);
+        if (_connections.find(fd) != _connections.end())
+        {
+            handleConnectionEvent(fd, fds[i].revents);
+            continue;
+        }
+        handleCgiPipeEvent(fd, fds[i].revents);
     }
 }
 
@@ -205,6 +272,7 @@ void Server::sweepTimeouts()
     for (std::map<int, Connection*>::iterator it = _connections.begin();
          it != _connections.end(); ++it)
     {
+        it->second->checkCgiProgress(now);
         if (now - it->second->getLastActivity() > 60)
         {
             it->second->forceClose();
@@ -223,7 +291,7 @@ bool Server::pollOnce(std::vector<pollfd>& fds)
     {
         return false;
     }
-    int result = poll(&fds[0], fds.size(), 1000);
+    int result = poll(&fds[0], fds.size(), 200);
     if (result > 0)
         processPollEvents(fds);
     return true;

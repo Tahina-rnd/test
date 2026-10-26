@@ -22,6 +22,8 @@ HTTP_SRCS	= $(SRC_DIR)/http/Mime.cpp \
 			  $(SRC_DIR)/http/Request.cpp \
 			  $(SRC_DIR)/http/Response.cpp
 
+CGI_SRCS	= $(SRC_DIR)/cgi/CgiHandler.cpp
+
 NET_SRCS	= $(SRC_DIR)/network/Socket.cpp \
 			  $(SRC_DIR)/network/Server.cpp \
 			  $(SRC_DIR)/network/Connection.cpp
@@ -30,7 +32,8 @@ SRCS		= $(SRC_DIR)/main.cpp \
 			  $(SRC_DIR)/utils/utils.cpp \
 			  $(CFG_SRCS) \
 			  $(NET_SRCS) \
-			  $(HTTP_SRCS)
+			  $(HTTP_SRCS) \
+			  $(CGI_SRCS)
 
 OBJS		= $(patsubst $(SRC_DIR)/%.cpp, $(OBJ_DIR)/%.o, $(SRCS))
 DEPS		= $(OBJS:.o=.d)

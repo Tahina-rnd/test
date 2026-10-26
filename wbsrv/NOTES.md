@@ -198,7 +198,7 @@ ss -ltnp | grep 8080
 ### 3.6 Timeouts
 
 - [x] Inactivité client : 60 s → fermeture.
-- [ ] CGI : 10 s → `SIGKILL` + `waitpid` (Sprint 5).
+- [x] CGI : 10 s → `SIGKILL` + `waitpid` (Sprint 5).
 - [x] Aucune requête ne peut rester suspendue indéfiniment côté client.
 
 ### 3.7 `SIGPIPE`
@@ -288,8 +288,8 @@ ss -ltnp | grep 8080
 | `431` | En-têtes trop gros | ✅ |
 | `500` | Erreur interne | ✅ (fallback) |
 | `501` | Transfer-Encoding inconnu | ✅ |
-| `502` | Réponse CGI invalide | ❌ (Sprint 5) |
-| `504` | Timeout CGI | ❌ (Sprint 5) |
+| `502` | Réponse CGI invalide | ✅ |
+| `504` | Timeout CGI | ✅ |
 | `505` | Version HTTP | ✅ |
 
 ### 4.5 Site statique
@@ -348,8 +348,8 @@ ss -ltnp | grep 8080
 | `return` | ✅ | code + URL, ou URL seule |
 | `autoindex` | ✅ | `on`/`off` |
 | `upload_store` | ✅ | utilisé par POST et DELETE |
-| `cgi_ext` | ✅ (parsé) | ❌ pas encore utilisé |
-| `cgi_pass` | ✅ (parsé) | ❌ pas encore utilisé |
+| `cgi_ext` | ✅ | utilisé par `CgiHandler` |
+| `cgi_pass` | ✅ | utilisé par `CgiHandler` |
 
 ### 5.2 Validation
 
@@ -449,8 +449,8 @@ ss -ltnp | grep 8080
 - [x] POST
 - [x] DELETE
 - [x] Upload
-- [ ] CGI
-- [ ] Configs et fichiers de démo complets (CGI)
+- [x] CGI
+- [x] Configs et fichiers de démo complets (CGI)
 
 ### Rendu
 

@@ -46,10 +46,13 @@ class Server
 		void buildPollFds(std::vector<pollfd>& fds) const;
 		void appendListenerPollFds(std::vector<pollfd>& fds) const;
 		void appendConnectionPollFds(std::vector<pollfd>& fds) const;
+		void appendCgiPollFds(std::vector<pollfd>& fds) const;
 		void processPollEvents(std::vector<pollfd>& fds);
 		bool pollOnce(std::vector<pollfd>& fds);
 		void handleListenerEvent(Listener& listener, short revents);
 		void handleConnectionEvent(int fd, short revents);
+		void handleCgiPipeEvent(int fd, short revents);
+		Connection* findConnectionByCgiFd(int fd);
 		void sweepTimeouts();
 
 		void acceptNewConnection(Listener& listener);

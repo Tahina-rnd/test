@@ -1,9 +1,11 @@
 #include "Connection.hpp"
+#include "CgiHandler.hpp"
 #include "Socket.hpp"
 #include "Mime.hpp"
 #include <unistd.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <poll.h>
 #include <cstdio>
 #include <vector>
 #include <sstream>
@@ -295,7 +297,8 @@ Connection::Connection(int fd, const ServerConfig& config)
 	  _listenerConfigs(NULL),
 	  _currentConfig(NULL),
 	  _state(READING_REQUEST),
-	  _lastActivity(std::time(NULL))
+	  _lastActivity(std::time(NULL)),
+	  _cgi(NULL)
 {
 	_singleConfigList.push_back(config);
 	_listenerConfigs = &_singleConfigList;
@@ -309,7 +312,8 @@ Connection::Connection(int fd, const std::list<ServerConfig>& configs)
 	  _listenerConfigs(&configs),
 	  _currentConfig(NULL),
 	  _state(READING_REQUEST),
-	  _lastActivity(std::time(NULL))
+	  _lastActivity(std::time(NULL)),
+	  _cgi(NULL)
 {
 	if (_listenerConfigs && !_listenerConfigs->empty())
 		_currentConfig = &_listenerConfigs->front();
@@ -319,6 +323,16 @@ Connection::Connection(int fd, const std::list<ServerConfig>& configs)
 
 Connection::~Connection()
 {
+	clearCgi();
+}
+
+void Connection::clearCgi()
+{
+	if (_cgi)
+	{
+		delete _cgi;
+		_cgi = NULL;
+	}
 }
 
 int Connection::getFd() const
@@ -343,7 +357,83 @@ bool Connection::wantsToWrite() const
 
 void Connection::forceClose()
 {
+	clearCgi();
 	_state = CLOSING;
+}
+
+bool Connection::hasActiveCgi() const
+{
+	return (_state == RUNNING_CGI && _cgi != NULL);
+}
+
+int Connection::getCgiInFd() const
+{
+	if (!hasActiveCgi() || !_cgi->wantsWrite())
+		return -1;
+	return _cgi->getInFd();
+}
+
+int Connection::getCgiOutFd() const
+{
+	if (!hasActiveCgi() || !_cgi->wantsRead())
+		return -1;
+	return _cgi->getOutFd();
+}
+
+void Connection::handleCgiEvent(int fd, short revents)
+{
+	if (!hasActiveCgi())
+		return;
+
+	if (fd == _cgi->getInFd())
+	{
+		if (revents & POLLOUT)
+		{
+			_cgi->handleWritable();
+			_lastActivity = std::time(NULL);
+		}
+		else if (revents & (POLLERR | POLLHUP | POLLNVAL))
+		{
+			_cgi->closeInPipe();
+		}
+	}
+	else if (fd == _cgi->getOutFd())
+	{
+		if (revents & POLLIN)
+		{
+			_cgi->handleReadable();
+			_lastActivity = std::time(NULL);
+		}
+		else if (revents & (POLLHUP | POLLERR | POLLNVAL))
+		{
+			_cgi->closeOutPipe();
+		}
+	}
+	checkCgiProgress(std::time(NULL));
+}
+
+void Connection::checkCgiProgress(std::time_t now)
+{
+	if (!hasActiveCgi())
+		return;
+
+	_cgi->checkState();
+	if (_cgi->isFinished())
+	{
+		Response res = _cgi->buildResponse(_currentConfig,
+			_request.isKeepAlive());
+		clearCgi();
+		setResponse(res);
+		return;
+	}
+	if (now - _cgi->getStartTime() >= CgiHandler::CGI_TIMEOUT_SEC)
+	{
+		_cgi->killOnTimeout();
+		Response res = _cgi->buildResponse(_currentConfig,
+			_request.isKeepAlive());
+		clearCgi();
+		setResponse(res);
+	}
 }
 
 std::string Connection::requestHost() const
@@ -589,10 +679,39 @@ bool Connection::decodeRequestPath(std::string& decoded)
 	return true;
 }
 
+bool Connection::tryCgi(const std::string& normPath,
+	const LocationConfig* loc)
+{
+	CgiHandler::Target target;
+	int errCode = 0;
+	if (!CgiHandler::resolveTarget(normPath, _currentConfig, loc, target, errCode))
+		return false;
+	if (errCode != 0)
+	{
+		setErrorResponse(errCode);
+		return true;
+	}
+	clearCgi();
+	_cgi = new CgiHandler(target, _request, _currentConfig);
+	if (!_cgi->start())
+	{
+		int code = _cgi->getErrorCode();
+		clearCgi();
+		setErrorResponse(code);
+		return true;
+	}
+	_state = RUNNING_CGI;
+	_lastActivity = std::time(NULL);
+	return true;
+}
+
 void Connection::dispatchMethod(const std::string& normPath,
 	const LocationConfig* loc)
 {
 	const std::string& method = _request.getMethod();
+	if ((method == "GET" || method == "POST") && tryCgi(normPath, loc))
+		return;
+
 	if (method == "GET")
 		servePath(normPath, loc);
 	else if (method == "POST")
@@ -742,15 +861,16 @@ void Connection::handleReadable()
 
 	if (n <= 0)
 	{
-		_state = CLOSING;
+		forceClose();
 		return;
 	}
 	_lastActivity = std::time(NULL);
 	Request::State before = _request.getState();
 	_request.append(buf, static_cast<std::size_t>(n));
-	// La réponse en cours n'est pas encore partie : les octets lus sont
-	// la suite pipelinée, traitée par finishWrite()/beginNextRequest().
-	if (before == Request::STATE_COMPLETE || before == Request::STATE_ERROR)
+	// La réponse en cours (ou le CGI) n'est pas encore terminée : les octets
+	// lus sont la suite pipelinée, traitée par finishWrite()/beginNextRequest().
+	if (before == Request::STATE_COMPLETE || before == Request::STATE_ERROR
+		|| _state == RUNNING_CGI)
 		return;
 	dispatchServerConfig();
 	processRequestIfComplete();
@@ -805,5 +925,5 @@ void Connection::handleWritable()
 			finishWrite();
 	}
 	else if (n == -1)
-		_state = CLOSING;
+		forceClose();
 }
